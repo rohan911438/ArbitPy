@@ -218,50 +218,62 @@ What would you like to work on today?`,
 
 User Question: ${userMessage}`;
 
-    const response = await fetch(GEMINI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: systemPrompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
+    try {
+      const response = await fetch(GEMINI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: systemPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
           },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH", 
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      })
-    });
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH", 
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+          ]
+        })
+      });
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      // Check if the response has the expected structure
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+        throw new Error('Invalid API response structure');
+      }
+      
+      return data.candidates[0].content.parts[0].text || 'Sorry, I couldn\'t generate a response.';
+    } catch (fetchError) {
+      // Re-throw with more context
+      throw new Error(`Failed to call Gemini API: ${fetchError.message}`);
     }
-
-    const data = await response.json();
-    return data.candidates[0]?.content?.parts[0]?.text || 'Sorry, I couldn\'t generate a response.';
   };
 
   const handleSendMessage = async (messageContent: string = input) => {
@@ -306,17 +318,39 @@ User Question: ${userMessage}`;
       setMessages(prev => prev.slice(0, -1).concat(aiMessage));
     } catch (error) {
       console.error('Error calling Gemini API:', error);
+      
+      let errorContent = '❌ Sorry, I encountered an error while processing your request.';
+      let toastDescription = 'Failed to get response from AI. Please try again.';
+      
+      // Provide more specific error messages based on the error type
+      if (error.message.includes('403')) {
+        errorContent += '\n\n🔑 **API Key Issue**: The API key might be invalid or has reached its quota limit.';
+        toastDescription = 'API key issue. Please check the configuration.';
+      } else if (error.message.includes('429')) {
+        errorContent += '\n\n⏱️ **Rate Limited**: Too many requests. Please wait a moment and try again.';
+        toastDescription = 'Rate limited. Please wait and try again.';
+      } else if (error.message.includes('CORS')) {
+        errorContent += '\n\n🌐 **CORS Issue**: Cross-origin request blocked. This is a browser security restriction.';
+        toastDescription = 'CORS issue detected.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorContent += '\n\n📡 **Network Error**: Please check your internet connection and try again.';
+        toastDescription = 'Network connection error.';
+      }
+      
+      // Add helpful suggestions
+      errorContent += '\n\n**Suggestions:**\n• Try rephrasing your question\n• Check your internet connection\n• Wait a moment and try again\n• Use simpler, more specific queries';
+      
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         type: 'ai',
-        content: '❌ Sorry, I encountered an error while processing your request. Please try again or rephrase your question.',
+        content: errorContent,
         timestamp: new Date()
       };
       setMessages(prev => prev.slice(0, -1).concat(errorMessage));
       
       toast({
         title: 'AI Assistant Error',
-        description: 'Failed to get response from AI. Please try again.',
+        description: toastDescription,
         variant: 'destructive'
       });
     } finally {
