@@ -6,6 +6,7 @@ import { Playground } from '@/components/pages/Playground';
 import { Examples } from '@/components/pages/Examples';
 import { Settings } from '@/components/pages/Settings';
 import { About } from '@/components/pages/About';
+import { ArbitPyAI } from '@/components/pages/ArbitPyAI';
 import { TransactionLog } from '@/components/output/TransactionLog';
 import { useAppStore } from '@/stores/appStore';
 
@@ -19,6 +20,8 @@ const Index = () => {
         return <Playground />;
       case 'examples':
         return <Examples />;
+      case 'arbitpy-ai':
+        return <ArbitPyAI />;
       case 'settings':
         return <Settings />;
       case 'about':

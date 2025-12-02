@@ -3,6 +3,7 @@ import { HeroSection } from './HeroSection';
 import { FeaturesSection } from './FeaturesSection';
 import { HowItWorksSection } from './HowItWorksSection';
 import { ExamplesSection } from './ExamplesSection';
+import { AIFeaturesSection } from './AIFeaturesSection';
 import { CTASection } from './CTASection';
 import { Footer } from './Footer';
 
@@ -18,6 +19,7 @@ export function LandingPage({ onLaunchApp }: LandingPageProps) {
       <FeaturesSection />
       <HowItWorksSection />
       <ExamplesSection />
+      <AIFeaturesSection />
       <CTASection onLaunchApp={onLaunchApp} />
       <Footer />
     </div>

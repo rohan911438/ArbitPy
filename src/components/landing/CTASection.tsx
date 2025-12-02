@@ -1,5 +1,5 @@
 import { useMetaMask } from '@/hooks/useMetaMask';
-import { Rocket, Wallet, Loader2, ArrowRight, Zap, Code2, Users, Award, Star } from 'lucide-react';
+import { Rocket, Wallet, Loader2, ArrowRight, Zap, Code2, Users, Award, Star, Brain, Sparkles } from 'lucide-react';
 
 interface CTASectionProps {
   onLaunchApp: () => void;
@@ -47,15 +47,30 @@ export function CTASection({ onLaunchApp }: CTASectionProps) {
           {/* Enhanced CTA buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-12 sm:mb-16 px-4">
             {connectedWallet ? (
-              <button
-                onClick={onLaunchApp}
-                className="group relative flex items-center gap-2 sm:gap-4 px-8 sm:px-12 py-4 sm:py-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-accent to-primary text-white font-bold text-lg sm:text-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] sm:hover:scale-[1.05] transition-all duration-300 animate-glow w-full sm:w-auto max-w-sm sm:max-w-none"
-              >
-                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-20 transition-opacity" />
-                <Rocket className="w-6 h-6 sm:w-7 sm:h-7 animate-bounce-gentle" />
-                <span className="whitespace-nowrap">Launch Playground Now</span>
-                <ArrowRight className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:translate-x-2" />
-              </button>
+              <>
+                <button
+                  onClick={onLaunchApp}
+                  className="group relative flex items-center gap-2 sm:gap-4 px-8 sm:px-12 py-4 sm:py-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-accent to-primary text-white font-bold text-lg sm:text-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] sm:hover:scale-[1.05] transition-all duration-300 animate-glow w-full sm:w-auto max-w-sm sm:max-w-none"
+                >
+                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-20 transition-opacity" />
+                  <Rocket className="w-6 h-6 sm:w-7 sm:h-7 animate-bounce-gentle" />
+                  <span className="whitespace-nowrap">Launch Playground</span>
+                  <ArrowRight className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:translate-x-2" />
+                </button>
+                
+                <button
+                  onClick={() => {
+                    onLaunchApp();
+                    // This will be handled by the app store to navigate to AI page
+                  }}
+                  className="group relative flex items-center gap-2 sm:gap-4 px-6 sm:px-10 py-4 sm:py-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 text-white font-semibold text-base sm:text-lg shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] sm:hover:scale-[1.05] transition-all duration-300 w-full sm:w-auto max-w-sm sm:max-w-none"
+                >
+                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity" />
+                  <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="whitespace-nowrap">Try ArbitPy AI</span>
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+                </button>
+              </>
             ) : (
               <button
                 onClick={connect}

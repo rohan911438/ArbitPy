@@ -21,8 +21,8 @@ const customStyles = `
   }
   
   .animate-fade-in {
-    animation: fade-in 0.6s ease-out forwards;
-    opacity: 0;
+    animation: fade-in 0.6s ease-out;
+    opacity: 1;
   }
   
   .hover-lift:hover {
@@ -983,7 +983,7 @@ export function Examples() {
       <div className="relative z-10 p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Enhanced header with breadcrumb and stats */}
-          <div className="mb-12 animate-fade-in">
+          <div className="mb-12">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <span>ArbitPy Playground</span>
               <ArrowRight className="w-3 h-3" />
@@ -1062,8 +1062,7 @@ export function Examples() {
               return (
                 <div
                   key={example.id}
-                  className="group relative p-8 rounded-3xl bg-gradient-to-br from-card via-card/80 to-secondary/30 border border-border/50 hover:border-primary/50 transition-all duration-700 hover:shadow-2xl hover:shadow-primary/20 animate-fade-in backdrop-blur-sm hover:-translate-y-1"
-                  style={{ animationDelay: `${index * 200}ms` }}
+                  className="group relative p-8 rounded-3xl bg-gradient-to-br from-card via-card/80 to-secondary/30 border border-border/50 hover:border-primary/50 transition-all duration-700 hover:shadow-2xl hover:shadow-primary/20 backdrop-blur-sm hover:-translate-y-1"
                 >
                   {/* Enhanced hover glow effect */}
                   <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-700" />

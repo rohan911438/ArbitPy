@@ -68,8 +68,8 @@ interface AppState {
   setIsLinting: (loading: boolean) => void;
 
   // Active page
-  activePage: 'playground' | 'examples' | 'settings' | 'about';
-  setActivePage: (page: 'playground' | 'examples' | 'settings' | 'about') => void;
+  activePage: 'playground' | 'examples' | 'settings' | 'about' | 'arbitpy-ai';
+  setActivePage: (page: 'playground' | 'examples' | 'settings' | 'about' | 'arbitpy-ai') => void;
 }
 
 const DEFAULT_CODE = `# ArbitPy Smart Contract Example

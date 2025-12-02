@@ -7,12 +7,15 @@ import {
   Info, 
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 
 const menuItems = [
   { id: 'playground', label: 'Playground', icon: Code2 },
   { id: 'examples', label: 'Examples', icon: BookOpen },
+  { id: 'arbitpy-ai', label: 'ArbitPy AI', icon: Brain, special: true },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'about', label: 'About', icon: Info },
 ] as const;
@@ -33,7 +36,7 @@ export function Sidebar() {
           <Zap className="w-5 h-5 text-primary-foreground" />
         </div>
         {sidebarOpen && (
-          <div className="animate-fade-in">
+          <div>
             <h1 className="text-lg font-bold text-foreground">ArbitPy</h1>
             <p className="text-xs text-muted-foreground">Python → Arbitrum</p>
           </div>
@@ -47,14 +50,23 @@ export function Sidebar() {
             key={item.id}
             onClick={() => setActivePage(item.id)}
             className={cn(
-              'w-full sidebar-item',
-              activePage === item.id && 'sidebar-item-active'
+              'w-full sidebar-item relative',
+              activePage === item.id && 'sidebar-item-active',
+              item.special && 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 hover:border-purple-500/40'
             )}
           >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && (
-              <span className="animate-fade-in truncate">{item.label}</span>
-            )}
+            <div className={cn(
+              "flex items-center gap-3",
+              item.special && "text-purple-400"
+            )}>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {sidebarOpen && (
+                <span className="truncate font-medium">{item.label}</span>
+              )}
+              {item.special && sidebarOpen && (
+                <Sparkles className="w-3 h-3 ml-auto text-purple-400 animate-pulse" />
+              )}
+            </div>
           </button>
         ))}
       </nav>
