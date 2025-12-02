@@ -151,7 +151,7 @@ contract ArbitPyMaster is ReentrancyGuard, Ownable, Pausable {
     constructor(
         address _feeRecipient,
         address _emergencyWithdrawer
-    ) {
+    ) Ownable(msg.sender) {
         require(_feeRecipient != address(0), "ArbitPy: Invalid fee recipient");
         require(_emergencyWithdrawer != address(0), "ArbitPy: Invalid emergency withdrawer");
         
@@ -607,26 +607,26 @@ contract ArbitPyMaster is ReentrancyGuard, Ownable, Pausable {
     }
 
     function _executeCompoundStrategy(
-        address inputToken,
+        address /* inputToken */,
         uint256 inputAmount
-    ) internal returns (uint256) {
+    ) internal pure returns (uint256) {
         // Implementation for compound strategy
         // This would integrate with compound protocol
         return inputAmount.mul(105).div(100); // 5% yield simulation
     }
 
     function _executeYieldFarmStrategy(
-        address inputToken,
+        address /* inputToken */,
         uint256 inputAmount
-    ) internal returns (uint256) {
+    ) internal pure returns (uint256) {
         // Implementation for yield farming strategy
         return inputAmount.mul(108).div(100); // 8% yield simulation
     }
 
     function _executeLiquidityMiningStrategy(
-        address inputToken,
+        address /* inputToken */,
         uint256 inputAmount
-    ) internal returns (uint256) {
+    ) internal pure returns (uint256) {
         // Implementation for liquidity mining strategy
         return inputAmount.mul(112).div(100); // 12% yield simulation
     }
