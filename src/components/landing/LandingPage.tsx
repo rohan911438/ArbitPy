@@ -12,7 +12,7 @@ interface LandingPageProps {
 
 export function LandingPage({ onLaunchApp }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar onLaunchApp={onLaunchApp} />
       <HeroSection onLaunchApp={onLaunchApp} />
       <FeaturesSection />

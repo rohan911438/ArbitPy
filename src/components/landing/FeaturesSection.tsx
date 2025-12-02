@@ -10,7 +10,8 @@ import {
   Rocket,
   Globe,
   Lock,
-  Cpu
+  Cpu,
+  ArrowRight
 } from 'lucide-react';
 
 const features = [
@@ -87,55 +88,85 @@ const advancedFeatures = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
+    <section id="features" className="py-32 relative overflow-hidden">
+      {/* Enhanced background effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
+      <div className="absolute top-1/3 left-10 w-72 h-72 bg-primary/10 rounded-full blur-[128px] animate-pulse-slow" />
+      <div className="absolute bottom-1/3 right-10 w-72 h-72 bg-accent/10 rounded-full blur-[128px] animate-pulse-slow" style={{ animationDelay: '1s' }} />
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Everything You Need to Build on{' '}
-            <span className="text-primary">Arbitrum</span>
+        {/* Enhanced section header */}
+        <div className="text-center mb-20 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <Rocket className="w-4 h-4 text-primary animate-bounce-gentle" />
+            <span className="text-sm text-primary font-semibold">Powered by Advanced Compilation Technology</span>
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
+            Everything You Need to{' '}
+            <span className="bg-gradient-to-r from-primary via-accent to-primary animate-gradient bg-clip-text text-transparent">
+              Build on Arbitrum
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            A complete toolkit designed for Python developers entering the world of blockchain development.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            A revolutionary toolkit that bridges Python and blockchain development. 
+            <span className="text-primary font-medium">No Solidity experience required</span> - 
+            just write Python and deploy to production.
           </p>
         </div>
 
-        {/* Main features grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        {/* Enhanced main features grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-16 lg:mb-20">
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group relative p-6 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in"
+              className={`group relative p-6 lg:p-8 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-card to-card/50 border border-border hover:border-primary/50 transition-all duration-500 hover-lift animate-fade-in backdrop-blur-sm`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} mb-4`}>
-                <feature.icon className="w-6 h-6 text-white" />
+              {/* Hover glow effect */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="relative z-10">
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                  <feature.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed group-hover:text-foreground/90 transition-colors duration-300">
+                  {feature.description}
+                </p>
+                
+                {/* Learn more indicator */}
+                <div className="flex items-center gap-2 mt-4 text-primary opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <span className="text-sm font-medium">Learn more</span>
+                  <ArrowRight className="w-4 h-4 transform translate-x-0 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>
 
-        {/* Advanced features */}
-        <div className="bg-card rounded-2xl border border-border p-8">
-          <h3 className="text-xl font-semibold mb-6 text-center">Advanced Capabilities</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {advancedFeatures.map((feature) => (
-              <div key={feature.title} className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-secondary text-primary mb-3">
-                  <feature.icon className="w-5 h-5" />
+        {/* Enhanced advanced features showcase */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-3xl blur-xl" />
+          <div className="relative bg-gradient-to-br from-card/80 to-secondary/20 rounded-3xl border border-primary/20 p-10 backdrop-blur-xl">
+            <div className="text-center mb-8 animate-fade-in stagger-6">
+              <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-foreground to-primary/80 bg-clip-text text-transparent">
+                ✨ Advanced Capabilities
+              </h3>
+              <p className="text-muted-foreground">Production-ready features built for serious blockchain development</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {advancedFeatures.map((feature, index) => (
+                <div key={feature.title} className={`text-center group hover-lift animate-scale-in`} style={{ animationDelay: `${600 + index * 100}ms` }}>
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 text-primary mb-4 group-hover:scale-110 group-hover:from-primary/30 group-hover:to-accent/30 transition-all duration-300 shadow-lg">
+                    <feature.icon className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-semibold mb-2 group-hover:text-primary transition-colors">{feature.title}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
                 </div>
-                <h4 className="text-sm font-medium mb-1">{feature.title}</h4>
-                <p className="text-xs text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

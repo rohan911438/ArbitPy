@@ -20,13 +20,13 @@ export function Navbar({ onLaunchApp }: NavbarProps) {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/60">
-              <Zap className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-primary to-primary/60">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold">ArbitPy</span>
+            <span className="text-lg sm:text-xl font-bold">ArbitPy</span>
           </div>
 
           {/* Desktop Nav */}
