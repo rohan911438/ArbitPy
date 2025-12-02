@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "format": "prettier --write \"src/**/*.js\"",
+    "build": "echo 'No build step required for Node.js'",
+    "docker:build": "docker build -t arbitpy-backend .",
+    "docker:run": "docker run -p 5000:5000 --env-file .env arbitpy-backend",
+    "setup": "node scripts/setup.js",
+    "seed": "node scripts/seed.js",
+    "migrate": "node scripts/migrate.js",
+    "check-deps": "node scripts/check-dependencies.js"
+  }
+}
