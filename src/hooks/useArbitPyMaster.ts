@@ -3,8 +3,8 @@ import { useAccount, useContractRead, useContractWrite, usePrepareContractWrite 
 import { parseEther, formatEther } from 'viem';
 import { ARBITPY_MASTER_ABI, ArbitrageParams, UserPosition, PoolInfo, PlatformStats } from '../contracts/ArbitPyMasterABI';
 
-// You'll need to update this with your deployed contract address
-const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // Update after deployment
+// Deployed contract address on Arbitrum Sepolia
+const CONTRACT_ADDRESS = '0xD4fcbA9301d11DF04F5bA3361D5962b15D761705';
 
 export const useArbitPyMaster = () => {
   const { address } = useAccount();
