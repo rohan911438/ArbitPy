@@ -42,10 +42,16 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Import routes
+import arbitPyMasterRoutes from './routes/arbitpy-master-simple.js';
+
 // Simple logging
 const log = (message) => {
   console.log(`[${new Date().toISOString()}] ${message}`);
 };
+
+// API Routes
+app.use('/api/v1/arbitpy-master', arbitPyMasterRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {

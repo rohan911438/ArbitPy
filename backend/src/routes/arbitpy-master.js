@@ -1,22 +1,13 @@
 import express from 'express';
-import { body, param, query, validationResult } from 'express-validator';
+// import { body, param, query, validationResult } from 'express-validator';
 import ArbitPyMasterService from '../services/ArbitPyMasterService.js';
-import { logger } from '../utils/logger.js';
+// import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-/**
- * Validation middleware
- */
-const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      errors: errors.array()
-    });
-  }
-  next();
+// Simple logging function
+const log = (message) => {
+  console.log(`[${new Date().toISOString()}] ${message}`);
 };
 
 /**
@@ -82,10 +73,7 @@ router.get('/stats', async (req, res) => {
  *       200:
  *         description: User position data
  */
-router.get('/user/:address/position', 
-  param('address').isEthereumAddress().withMessage('Invalid Ethereum address'),
-  validate,
-  async (req, res) => {
+router.get('/user/:address/position', async (req, res) => {
     try {
       const { address } = req.params;
       const position = await ArbitPyMasterService.getUserPosition(address);
@@ -95,7 +83,7 @@ router.get('/user/:address/position',
         data: position
       });
     } catch (error) {
-      logger.error('Error fetching user position:', error);
+      log('Error fetching user position: ' + error.message);
       res.status(500).json({
         success: false,
         error: 'Failed to fetch user position',

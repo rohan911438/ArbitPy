@@ -9,7 +9,7 @@ import { cacheManager } from '../utils/cache.js';
 class ArbitPyMasterService {
   constructor() {
     this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY');
-    this.contractAddress = process.env.ARBITPY_MASTER_ADDRESS || '';
+    this.contractAddress = process.env.ARBITPY_MASTER_ADDRESS || '0xD4fcbA9301d11DF04F5bA3361D5962b15D761705';
     
     // Contract ABI (you'll get this from Remix after deployment)
     this.contractABI = [
