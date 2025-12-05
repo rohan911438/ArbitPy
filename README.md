@@ -205,6 +205,8 @@ Use ArbitPy in your existing projects with our professional TypeScript SDK:
 npm install @arbitpy/sdk
 ```
 
+**📦 [View on NPM](https://www.npmjs.com/package/@arbitpy/sdk)** | **📚 [SDK Documentation](https://github.com/rohan911438/arbitpy-playground/tree/main/packages/arbitpy-sdk)**
+
 ```typescript
 import ArbitPySDK from '@arbitpy/sdk';
 
