@@ -361,6 +361,76 @@ export function Settings() {
             </section>
           </div>
 
+          {/* ArbitPy SDK Section */}
+          <section className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 border border-primary/20 hover:border-primary/40 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30">
+                <Database className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold">ArbitPy SDK</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Use ArbitPy in your own projects with our professional TypeScript SDK.
+                Full type safety, multi-network support, and AI-powered development tools.
+              </p>
+              
+              <div className="bg-secondary/30 rounded-lg p-4 border border-border/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-mono text-primary">@arbitpy/sdk</span>
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full border border-primary/30">v1.0.0</span>
+                </div>
+                
+                <div className="grid gap-3">
+                  <div className="bg-background/50 rounded-md p-3 font-mono text-sm border border-border/30">
+                    <code className="text-green-400">npm install @arbitpy/sdk</code>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-primary rounded-full"></span>
+                      <span>TypeScript SDK with full type safety</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-primary rounded-full"></span>
+                      <span>Multi-network deployment utilities</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-primary rounded-full"></span>
+                      <span>AI-powered development tools</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1 h-1 bg-primary rounded-full"></span>
+                      <span>Contract interaction helpers</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 mt-4">
+                  <a
+                    href="https://www.npmjs.com/package/@arbitpy/sdk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-md border border-primary/30 hover:bg-primary/20 transition-colors"
+                  >
+                    <Globe className="w-3 h-3" />
+                    NPM Package
+                  </a>
+                  <a
+                    href="https://github.com/rohan911438/arbitpy-playground/tree/main/packages/arbitpy-sdk"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-secondary/50 text-foreground rounded-md border border-border/50 hover:bg-secondary/80 transition-colors"
+                  >
+                    <Code className="w-3 h-3" />
+                    Documentation
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Enhanced Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 p-6 rounded-2xl bg-gradient-to-r from-card/50 to-secondary/30 border border-border/50">
             <button

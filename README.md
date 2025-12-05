@@ -2,6 +2,7 @@
 
 **The First Python-to-Blockchain Compiler That Actually Works**
 
+[![NPM Package](https://img.shields.io/badge/@arbitpy/sdk-v1.0.0-blue.svg)](https://www.npmjs.com/package/@arbitpy/sdk)
 [![Arbitrum](https://img.shields.io/badge/Built_for-Arbitrum_Stylus-blue.svg)](https://arbitrum.io/)
 [![Python](https://img.shields.io/badge/Python-Smart_Contracts-green.svg)](https://python.org/)
 [![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0xD4fcbA9301d11DF04F5bA3361D5962b15D761705)
@@ -63,6 +64,13 @@ ArbitPy is a revolutionary Python-to-blockchain compiler that brings the simplic
 - Interactive playground environment
 - Comprehensive error messages and debugging
 - One-click deployment to Arbitrum networks
+
+### 📦 **Professional SDK**
+- **@arbitpy/sdk** - Official TypeScript NPM package
+- Full type safety and IntelliSense support
+- Multi-network deployment utilities
+- Contract interaction helpers
+- AI-powered development tools
 
 ### 🛠️ **Advanced Tooling**
 - Smart contract templates and examples
@@ -188,6 +196,41 @@ arbitpy-playground/
 ├── ARBITPY_AI_DOCUMENTATION.md  # AI assistant documentation
 └── CONTRACT_DEPLOYMENT_GUIDE.md # Deployment guide
 ```
+
+## 📦 ArbitPy SDK
+
+Use ArbitPy in your existing projects with our professional TypeScript SDK:
+
+```bash
+npm install @arbitpy/sdk
+```
+
+```typescript
+import ArbitPySDK from '@arbitpy/sdk';
+
+const sdk = new ArbitPySDK();
+
+// Compile Python-like code to Vyper
+const result = await sdk.compiler.compileVyper(pythonCode);
+
+// Deploy to Arbitrum
+const deployment = await sdk.deployment.deploy({
+  bytecode: result.bytecode,
+  abi: result.abi,
+  network: 'arbitrum-sepolia'
+});
+
+// Interact with contracts
+const contract = sdk.contract(address, abi, 'arbitrum-sepolia');
+const balance = await contract.call('balanceOf', [userAddress]);
+```
+
+**SDK Features:**
+- 🎯 **Type-Safe**: Full TypeScript support with IntelliSense
+- 🌐 **Multi-Network**: Deploy to 8+ EVM networks
+- 🤖 **AI-Powered**: Built-in AI assistant for development
+- ⚡ **One-Line Deploy**: `sdk.createAndDeploy(code, options)`
+- 📊 **Real-Time Events**: Monitor compilation and deployment
 
 ## 🚀 Installation
 
@@ -601,26 +644,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 *ArbitPy - Bringing Python Simplicity to Blockchain Development*
 
 **"Write Python, Deploy Blockchain - It's that simple!"**
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/34936fc7-c4cb-4b4f-b2f0-7ad0e37e1b08) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
