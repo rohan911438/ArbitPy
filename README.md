@@ -2,7 +2,7 @@
 
 **The First Python-to-Blockchain Compiler That Actually Works**
 
-[![NPM Package](https://img.shields.io/badge/@arbitpy/sdk-v1.0.0-blue.svg)](https://www.npmjs.com/package/@arbitpy/sdk)
+[![NPM Package](https://img.shields.io/badge/arbitpy--sdk-v1.0.0-blue.svg)](https://www.npmjs.com/package/arbitpy-sdk)
 [![Arbitrum](https://img.shields.io/badge/Built_for-Arbitrum_Stylus-blue.svg)](https://arbitrum.io/)
 [![Python](https://img.shields.io/badge/Python-Smart_Contracts-green.svg)](https://python.org/)
 [![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0xD4fcbA9301d11DF04F5bA3361D5962b15D761705)
@@ -66,7 +66,7 @@ ArbitPy is a revolutionary Python-to-blockchain compiler that brings the simplic
 - One-click deployment to Arbitrum networks
 
 ### 📦 **Professional SDK**
-- **@arbitpy/sdk** - Official TypeScript NPM package
+- **arbitpy-sdk** - Official TypeScript NPM package
 - Full type safety and IntelliSense support
 - Multi-network deployment utilities
 - Contract interaction helpers
@@ -202,13 +202,13 @@ arbitpy-playground/
 Use ArbitPy in your existing projects with our professional TypeScript SDK:
 
 ```bash
-npm install @arbitpy/sdk
+npm install arbitpy-sdk
 ```
 
-**📦 [View on NPM](https://www.npmjs.com/package/@arbitpy/sdk)** | **📚 [SDK Documentation](https://github.com/rohan911438/arbitpy-playground/tree/main/packages/arbitpy-sdk)**
+**📦 [View on NPM](https://www.npmjs.com/package/arbitpy-sdk)** | **📚 [SDK Documentation](https://github.com/rohan911438/arbitpy-playground/tree/main/packages/arbitpy-sdk)**
 
 ```typescript
-import ArbitPySDK from '@arbitpy/sdk';
+import ArbitPySDK from 'arbitpy-sdk';
 
 const sdk = new ArbitPySDK();
 

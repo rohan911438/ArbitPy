@@ -1,5 +1,5 @@
 {
-  "name": "@arbitpy/sdk",
+  "name": "arbitpy-sdk",
   "version": "1.0.0",
   "description": "Official TypeScript SDK for ArbitPy - Write smart contracts in Python syntax and deploy to Arbitrum",
   "type": "module",
