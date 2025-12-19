@@ -2,7 +2,8 @@ import { ethers } from 'ethers';
 import { logger } from '../utils/logger.js';
 
 export class ContractDeployer {
-  constructor() {
+  constructor(network = 'arbitrum_sepolia') {
+    this.network = network;
     this.providers = new Map();
     this.networks = {
       ethereum: {
@@ -80,6 +81,7 @@ export class ContractDeployer {
   /**
    * Deploy contract
    * @param {Object} params - Deployment parameters
+   * @param {Object} options - Additional options like progress callbacks
    * @returns {Promise<Object>} Deployment result
    */
   async deploy({
@@ -87,11 +89,13 @@ export class ContractDeployer {
     abi,
     privateKey,
     network,
-    constructorArgs = [],
+    constructorParams = [],
     gasLimit,
     gasPrice,
     value = '0'
-  }) {
+  }, options = {}) {
+    const { onProgress } = options;
+    const deploymentNetwork = network || this.network;
     const startTime = Date.now();
     
     try {
@@ -99,11 +103,17 @@ export class ContractDeployer {
       if (!bytecode) throw new Error('Bytecode is required');
       if (!abi) throw new Error('ABI is required');
       if (!privateKey) throw new Error('Private key is required');
-      if (!network) throw new Error('Network is required');
+      
+      // Progress callback for start
+      onProgress?.({ stage: 'validation', message: 'Validating deployment parameters...' });
       
       // Get provider and network config
-      const provider = this.getProvider(network);
-      const networkConfig = this.networks[network];
+      const provider = this.getProvider(deploymentNetwork);
+      const networkConfig = this.networks[deploymentNetwork];
+      
+      if (!networkConfig) {
+        throw new Error(`Unsupported network: ${deploymentNetwork}`);
+      }
       
       // Create wallet
       const wallet = new ethers.Wallet(privateKey, provider);
@@ -111,9 +121,18 @@ export class ContractDeployer {
       logger.info(`Deploying contract to ${networkConfig.name}...`);
       logger.debug(`Wallet address: ${wallet.address}`);
       
+      onProgress?.({ stage: 'wallet', message: `Connected to wallet: ${wallet.address}` });
+      
       // Check wallet balance
       const balance = await wallet.provider.getBalance(wallet.address);
-      logger.info(`Wallet balance: ${ethers.formatEther(balance)} ETH`);
+      const balanceEth = ethers.formatEther(balance);
+      logger.info(`Wallet balance: ${balanceEth} ETH`);
+      
+      if (balance === 0n) {
+        throw new Error(`Insufficient funds: Wallet ${wallet.address} has no ETH for gas fees`);
+      }
+      
+      onProgress?.({ stage: 'balance', message: `Wallet balance: ${balanceEth} ETH` });
       
       // Create contract factory
       const contractFactory = new ethers.ContractFactory(abi, bytecode, wallet);
@@ -122,13 +141,18 @@ export class ContractDeployer {
       let finalGasLimit = gasLimit;
       if (!finalGasLimit) {
         try {
-          const estimated = await contractFactory.getDeployTransaction(...constructorArgs);
+          onProgress?.({ stage: 'gas_estimation', message: 'Estimating gas requirements...' });
+          
+          const estimated = await contractFactory.getDeployTransaction(...constructorParams);
           const gasEstimate = await wallet.provider.estimateGas(estimated);
           finalGasLimit = gasEstimate + (gasEstimate * 20n / 100n); // Add 20% buffer
+          
           logger.info(`Estimated gas: ${gasEstimate}, using: ${finalGasLimit}`);
+          onProgress?.({ stage: 'gas_estimation', message: `Gas estimated: ${gasEstimate}` });
         } catch (estimateError) {
           logger.warn('Gas estimation failed, using default:', estimateError.message);
           finalGasLimit = 3000000; // Default fallback
+          onProgress?.({ stage: 'gas_estimation', message: 'Using default gas limit: 3,000,000' });
         }
       }
       
@@ -148,13 +172,35 @@ export class ContractDeployer {
       };
       
       logger.info('Sending deployment transaction...');
-      const contract = await contractFactory.deploy(...constructorArgs, deployTx);
+      onProgress?.({ stage: 'deployment', message: 'Sending deployment transaction...' });
       
-      logger.info(`Deployment transaction sent: ${contract.deploymentTransaction().hash}`);
+      const contract = await contractFactory.deploy(...constructorParams, deployTx);
+      const deploymentTx = contract.deploymentTransaction();
+      
+      if (!deploymentTx) {
+        throw new Error('Failed to create deployment transaction');
+      }
+      
+      logger.info(`Deployment transaction sent: ${deploymentTx.hash}`);
+      onProgress?.({ 
+        stage: 'transaction_sent', 
+        message: `Transaction sent: ${deploymentTx.hash}`,
+        txHash: deploymentTx.hash 
+      });
       
       // Wait for deployment confirmation
+      onProgress?.({ stage: 'confirmation', message: 'Waiting for transaction confirmation...' });
+      
       const deploymentReceipt = await contract.waitForDeployment();
-      const receipt = await contract.deploymentTransaction().wait();
+      const receipt = await deploymentTx.wait();
+      
+      if (!receipt) {
+        throw new Error('Transaction receipt not available');
+      }
+      
+      if (receipt.status !== 1) {
+        throw new Error(`Transaction failed with status: ${receipt.status}`);
+      }
       
       const deploymentTime = Date.now() - startTime;
       const contractAddress = await contract.getAddress();
@@ -166,9 +212,16 @@ export class ContractDeployer {
       // Calculate deployment cost
       const deploymentCost = receipt.gasUsed * receipt.gasPrice;
       
+      onProgress?.({ 
+        stage: 'completed', 
+        message: `Contract deployed successfully at ${contractAddress}`,
+        contractAddress
+      });
+      
       return {
         success: true,
         contractAddress,
+        txHash: receipt.hash,
         transactionHash: receipt.hash,
         blockNumber: receipt.blockNumber,
         gasUsed: receipt.gasUsed.toString(),
@@ -176,6 +229,7 @@ export class ContractDeployer {
         deploymentCost: ethers.formatEther(deploymentCost),
         deploymentTime,
         network: networkConfig.name,
+        networkKey: deploymentNetwork,
         explorerUrl: `${networkConfig.explorer}/tx/${receipt.hash}`,
         contractExplorerUrl: `${networkConfig.explorer}/address/${contractAddress}`,
         receipt: {
@@ -186,8 +240,10 @@ export class ContractDeployer {
           gasUsed: receipt.gasUsed.toString(),
           cumulativeGasUsed: receipt.cumulativeGasUsed.toString(),
           effectiveGasPrice: receipt.gasPrice.toString(),
-          status: receipt.status
-        }
+          status: receipt.status,
+          blockHash: receipt.blockHash
+        },
+        message: `Contract successfully deployed to ${networkConfig.name}`
       };
       
     } catch (error) {
@@ -195,12 +251,20 @@ export class ContractDeployer {
       
       logger.error('Contract deployment failed:', error);
       
+      onProgress?.({ 
+        stage: 'error', 
+        message: `Deployment failed: ${error.message}`,
+        error: error.message
+      });
+      
       return {
         success: false,
         error: error.message,
         deploymentTime,
-        network: network ? this.networks[network]?.name : 'Unknown',
-        details: this.parseDeploymentError(error)
+        network: this.networks[deploymentNetwork]?.name || deploymentNetwork,
+        networkKey: deploymentNetwork,
+        details: this.parseDeploymentError(error),
+        message: `Deployment failed: ${error.message}`
       };
     }
   }

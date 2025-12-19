@@ -42,8 +42,14 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Make Socket.IO available to routes
+app.set('socketio', io);
+
 // Import routes
 import arbitPyMasterRoutes from './routes/arbitpy-master-simple.js';
+import deploymentRoutes from './routes/deployment.js';
+import compilerRoutes from './routes/compiler.js';
+import aiRoutes from './routes/ai.js';
 
 // Simple logging
 const log = (message) => {
@@ -52,6 +58,9 @@ const log = (message) => {
 
 // API Routes
 app.use('/api/v1/arbitpy-master', arbitPyMasterRoutes);
+app.use('/api/v1/deploy', deploymentRoutes);
+app.use('/api/v1/compile', compilerRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {

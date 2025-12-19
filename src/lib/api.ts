@@ -5,7 +5,10 @@ export interface CompileResponse {
   success: boolean;
   output: string;
   abi?: string;
+  bytecode?: string;
   errors?: string[];
+  warnings?: string[];
+  gasEstimate?: any;
 }
 
 export interface LintResponse {
@@ -22,234 +25,106 @@ export interface DeployResponse {
   txHash?: string;
   contractAddress?: string;
   error?: string;
+  blockNumber?: number;
+  gasUsed?: string;
+  deploymentCost?: string;
+  network?: string;
+  explorerUrl?: string;
+  contractExplorerUrl?: string;
+  sessionId?: string;
+  message?: string;
 }
 
 // Simulate compilation delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function compileToSolidity(pythonCode: string): Promise<CompileResponse> {
-  await delay(1500);
-  
-  // Simulated Solidity output
-  const solidityCode = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/compile/vyper`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code: pythonCode,
+        optimization: true,
+        version: 'latest'
+      }),
+    });
 
-/**
- * @title MyToken
- * @dev Compiled from ArbitPy Python contract
- */
-contract MyToken {
-    string public name = "ArbitPy Token";
-    string public symbol = "APY";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
+    const result = await response.json();
     
-    mapping(address => uint256) private _balances;
-    mapping(address => mapping(address => uint256)) private _allowances;
-    
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    
-    /**
-     * @dev Mint new tokens to an address
-     */
-    function mint(address to, uint256 amount) external {
-        _balances[to] += amount;
-        totalSupply += amount;
-        emit Transfer(address(0), to, amount);
+    if (!response.ok) {
+      return {
+        success: false,
+        output: '',
+        errors: [result.message || result.error || 'Compilation failed']
+      };
     }
-    
-    /**
-     * @dev Get the balance of an account
-     */
-    function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
-    }
-    
-    /**
-     * @dev Transfer tokens to another address
-     */
-    function transfer(address to, uint256 amount) external returns (bool) {
-        require(_balances[msg.sender] >= amount, "Insufficient balance");
-        
-        _balances[msg.sender] -= amount;
-        _balances[to] += amount;
-        
-        emit Transfer(msg.sender, to, amount);
-        return true;
-    }
-    
-    /**
-     * @dev Approve spender to spend tokens
-     */
-    function approve(address spender, uint256 amount) external returns (bool) {
-        _allowances[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-    
-    /**
-     * @dev Get allowance for spender
-     */
-    function allowance(address owner, address spender) external view returns (uint256) {
-        return _allowances[owner][spender];
-    }
-}`;
 
-  const abiOutput = JSON.stringify([
-    {
-      "inputs": [{"name": "to", "type": "address"}, {"name": "amount", "type": "uint256"}],
-      "name": "mint",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [{"name": "account", "type": "address"}],
-      "name": "balanceOf",
-      "outputs": [{"name": "", "type": "uint256"}],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [{"name": "to", "type": "address"}, {"name": "amount", "type": "uint256"}],
-      "name": "transfer",
-      "outputs": [{"name": "", "type": "bool"}],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [{"name": "spender", "type": "address"}, {"name": "amount", "type": "uint256"}],
-      "name": "approve",
-      "outputs": [{"name": "", "type": "bool"}],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {"indexed": true, "name": "from", "type": "address"},
-        {"indexed": true, "name": "to", "type": "address"},
-        {"indexed": false, "name": "value", "type": "uint256"}
-      ],
-      "name": "Transfer",
-      "type": "event"
-    }
-  ], null, 2);
-
-  return {
-    success: true,
-    output: solidityCode,
-    abi: abiOutput,
-  };
+    return {
+      success: result.success,
+      output: result.output || result.solidityCode || '',
+      abi: result.abi,
+      bytecode: result.bytecode,
+      errors: result.errors || [],
+      warnings: result.warnings || [],
+      gasEstimate: result.gasEstimate
+    };
+  } catch (error) {
+    console.error('Compilation API error:', error);
+    return {
+      success: false,
+      output: '',
+      errors: [error instanceof Error ? error.message : 'Unknown compilation error']
+    };
+  }
 }
 
 export async function compileToStylus(pythonCode: string): Promise<CompileResponse> {
-  await delay(1800);
-  
-  const rustCode = `//! ArbitPy Token - Compiled to Stylus/Rust
-//! SPDX-License-Identifier: MIT
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/compile/rust`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code: pythonCode,
+        optimization: true,
+        target: 'stylus'
+      }),
+    });
 
-#![cfg_attr(not(feature = "export-abi"), no_main)]
-extern crate alloc;
-
-use stylus_sdk::{
-    alloy_primitives::{Address, U256},
-    evm, msg,
-    prelude::*,
-    storage::{StorageAddress, StorageMap, StorageString, StorageU256, StorageU8},
-};
-
-sol_storage! {
-    #[entrypoint]
-    pub struct MyToken {
-        StorageString name;
-        StorageString symbol;
-        StorageU8 decimals;
-        StorageU256 total_supply;
-        StorageMap<Address, StorageU256> balances;
-        StorageMap<Address, StorageMap<Address, StorageU256>> allowances;
-    }
-}
-
-sol! {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-#[external]
-impl MyToken {
-    /// Initialize the token
-    pub fn init(&mut self) -> Result<(), Vec<u8>> {
-        self.name.set_str("ArbitPy Token");
-        self.symbol.set_str("APY");
-        self.decimals.set(U8::from(18));
-        Ok(())
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        output: '',
+        errors: [result.message || result.error || 'Stylus compilation failed']
+      };
     }
 
-    /// Mint new tokens to an address
-    pub fn mint(&mut self, to: Address, amount: U256) -> Result<(), Vec<u8>> {
-        let current = self.balances.get(to);
-        self.balances.insert(to, current + amount);
-        
-        let supply = self.total_supply.get();
-        self.total_supply.set(supply + amount);
-        
-        evm::log(Transfer {
-            from: Address::ZERO,
-            to,
-            value: amount,
-        });
-        
-        Ok(())
-    }
-
-    /// Get the balance of an account
-    pub fn balance_of(&self, account: Address) -> Result<U256, Vec<u8>> {
-        Ok(self.balances.get(account))
-    }
-
-    /// Transfer tokens to another address
-    pub fn transfer(&mut self, to: Address, amount: U256) -> Result<bool, Vec<u8>> {
-        let sender = msg::sender();
-        let sender_balance = self.balances.get(sender);
-        
-        if sender_balance < amount {
-            return Err(b"Insufficient balance".to_vec());
-        }
-        
-        self.balances.insert(sender, sender_balance - amount);
-        let to_balance = self.balances.get(to);
-        self.balances.insert(to, to_balance + amount);
-        
-        evm::log(Transfer {
-            from: sender,
-            to,
-            value: amount,
-        });
-        
-        Ok(true)
-    }
-
-    /// Approve spender to spend tokens
-    pub fn approve(&mut self, spender: Address, amount: U256) -> Result<bool, Vec<u8>> {
-        let owner = msg::sender();
-        self.allowances.setter(owner).insert(spender, amount);
-        
-        evm::log(Approval {
-            owner,
-            spender,
-            value: amount,
-        });
-        
-        Ok(true)
-    }
-}`;
-
-  return {
-    success: true,
-    output: rustCode,
-  };
+    return {
+      success: result.success,
+      output: result.output || result.rustCode || '',
+      bytecode: result.wasm || result.bytecode,
+      errors: result.errors || [],
+      warnings: result.warnings || [],
+      gasEstimate: result.gasEstimate
+    };
+  } catch (error) {
+    console.error('Stylus compilation API error:', error);
+    return {
+      success: false,
+      output: '',
+      errors: [error instanceof Error ? error.message : 'Unknown Stylus compilation error']
+    };
+  }
 }
 
 export async function lintCode(pythonCode: string): Promise<LintResponse> {
@@ -280,25 +155,57 @@ export async function lintCode(pythonCode: string): Promise<LintResponse> {
 }
 
 export async function deployContract(
-  compiledCode: string,
-  walletAddress: string
+  bytecode: string,
+  abi: any[],
+  privateKey: string,
+  network: string = 'arbitrum_sepolia',
+  constructorParams: any[] = []
 ): Promise<DeployResponse> {
-  await delay(3000);
-  
-  // Simulated deployment
-  const txHash = `0x${Array.from({ length: 64 }, () => 
-    Math.floor(Math.random() * 16).toString(16)
-  ).join('')}`;
-  
-  const contractAddress = `0x${Array.from({ length: 40 }, () => 
-    Math.floor(Math.random() * 16).toString(16)
-  ).join('')}`;
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/deploy/contract`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bytecode,
+        abi,
+        network,
+        constructorParams,
+        privateKey,
+        // Add some default gas settings
+        gasLimit: '3000000'
+      }),
+    });
 
-  return {
-    success: true,
-    txHash,
-    contractAddress,
-  };
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || result.error || 'Deployment failed');
+    }
+
+    return {
+      success: result.success,
+      txHash: result.txHash || result.transactionHash,
+      contractAddress: result.contractAddress,
+      blockNumber: result.blockNumber,
+      gasUsed: result.gasUsed,
+      deploymentCost: result.deploymentCost,
+      network: result.network,
+      explorerUrl: result.explorerUrl,
+      contractExplorerUrl: result.contractExplorerUrl,
+      sessionId: result.sessionId,
+      message: result.message
+    };
+  } catch (error) {
+    console.error('Deployment API error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown deployment error'
+    };
+  }
 }
 
 export async function executeFunction(
@@ -312,4 +219,85 @@ export async function executeFunction(
     success: true,
     result: '0x0000...0001',
   };
+}
+
+// New deployment monitoring functions
+
+export async function getDeploymentStatus(sessionId: string): Promise<any> {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/deploy/status/${sessionId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get deployment status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get deployment status error:', error);
+    throw error;
+  }
+}
+
+export async function getTransactionDetails(txHash: string, network: string = 'arbitrum_sepolia'): Promise<any> {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/deploy/transaction/${txHash}?network=${network}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get transaction details');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get transaction details error:', error);
+    throw error;
+  }
+}
+
+export async function estimateDeploymentGas(
+  bytecode: string,
+  abi: any[],
+  network: string = 'arbitrum_sepolia',
+  constructorParams: any[] = []
+): Promise<any> {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/deploy/estimate-gas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bytecode,
+        abi,
+        network,
+        constructorParams
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || result.error || 'Gas estimation failed');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Gas estimation API error:', error);
+    throw error;
+  }
 }

@@ -48,96 +48,220 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
   const { 
     bytecode, 
     abi, 
-    network = 'sepolia', 
+    network = 'arbitrum_sepolia', 
     constructorParams = [], 
     gasLimit,
     gasPrice,
     privateKey
   } = req.body;
   
+  let deploymentResult = null;
+  
   try {
     logger.info(`Starting contract deployment session: ${sessionId} on ${network}`);
     
     // Emit deployment start event
     const io = req.app.get('socketio');
-    io.to(`deployment-${sessionId}`).emit('deployment-status', {
-      status: 'started',
-      message: `Starting deployment on ${network}...`,
-      sessionId
-    });
+    if (io) {
+      io.to(`deployment-${sessionId}`).emit('deployment-status', {
+        status: 'started',
+        message: `Starting deployment on ${network}...`,
+        sessionId,
+        timestamp: new Date().toISOString()
+      });
+    }
     
-    // Initialize deployer
-    const deployer = new ContractDeployer(network);
+    // Validate network
+    const validNetworks = ['mainnet', 'arbitrum_sepolia', 'sepolia', 'goerli'];
+    if (!validNetworks.includes(network)) {
+      throw new Error(`Invalid network: ${network}. Supported networks: ${validNetworks.join(', ')}`);
+    }
     
-    // Deploy contract
-    const result = await deployer.deploy({
+    // Validate private key format
+    if (!privateKey || !privateKey.startsWith('0x') || privateKey.length !== 66) {
+      throw new Error('Invalid private key format. Must be 64 hex characters with 0x prefix');
+    }
+    
+    // Validate bytecode format
+    if (!bytecode || !bytecode.startsWith('0x') || bytecode.length < 4) {
+      throw new Error('Invalid bytecode format. Must be hex string with 0x prefix');
+    }
+    
+    // Initialize deployer with proper network mapping
+    const networkMap = {
+      'sepolia': 'arbitrum_sepolia',
+      'mainnet': 'arbitrum',
+      'goerli': 'arbitrum_sepolia'
+    };
+    
+    const deploymentNetwork = networkMap[network] || network;
+    const deployer = new ContractDeployer(deploymentNetwork);
+    
+    logger.info(`Deploying to network: ${deploymentNetwork}`);
+    
+    // Deploy contract with enhanced progress tracking
+    deploymentResult = await deployer.deploy({
       bytecode,
       abi,
       constructorParams,
       gasLimit,
       gasPrice,
-      privateKey
+      privateKey,
+      network: deploymentNetwork
     }, {
       onProgress: (progress) => {
-        io.to(`deployment-${sessionId}`).emit('deployment-progress', {
-          ...progress,
-          sessionId
-        });
+        logger.debug(`Deployment progress: ${progress.stage} - ${progress.message}`);
+        
+        if (io) {
+          io.to(`deployment-${sessionId}`).emit('deployment-progress', {
+            ...progress,
+            sessionId,
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     });
     
-    // Start monitoring if deployment was successful
-    if (result.success && result.txHash) {
-      const monitor = new TransactionMonitor(network);
-      monitor.startMonitoring(result.txHash, (status) => {
-        io.to(`deployment-${sessionId}`).emit('transaction-update', {
-          sessionId,
-          txHash: result.txHash,
-          ...status
-        });
+    // Enhanced deployment result validation
+    if (!deploymentResult) {
+      throw new Error('Deployment returned null result');
+    }
+    
+    if (!deploymentResult.success) {
+      throw new Error(deploymentResult.error || deploymentResult.message || 'Deployment failed for unknown reason');
+    }
+    
+    if (!deploymentResult.txHash) {
+      throw new Error('Deployment succeeded but no transaction hash returned');
+    }
+    
+    if (!deploymentResult.contractAddress) {
+      throw new Error('Deployment succeeded but no contract address returned');
+    }
+    
+    logger.info(`Contract deployed successfully: ${deploymentResult.contractAddress} (tx: ${deploymentResult.txHash})`);
+    
+    // Start transaction monitoring with enhanced error handling
+    try {
+      const monitor = new TransactionMonitor(deploymentNetwork);
+      
+      // Wait for confirmation with detailed progress
+      const confirmationResult = await monitor.waitForConfirmation(
+        deploymentResult.txHash,
+        2, // Wait for 2 confirmations
+        (status) => {
+          logger.debug(`Transaction ${deploymentResult.txHash} status: ${status.status} (${status.confirmations} confirmations)`);
+          
+          if (io) {
+            io.to(`deployment-${sessionId}`).emit('transaction-update', {
+              sessionId,
+              txHash: deploymentResult.txHash,
+              ...status,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      );
+      
+      // Update deployment result with confirmation details
+      deploymentResult = {
+        ...deploymentResult,
+        confirmed: true,
+        finalConfirmations: confirmationResult.confirmations,
+        finalStatus: confirmationResult.status
+      };
+      
+    } catch (monitorError) {
+      logger.warn(`Transaction monitoring failed, but deployment may have succeeded:`, monitorError);
+      
+      // Don't fail the entire deployment if monitoring fails
+      deploymentResult.monitoringError = monitorError.message;
+      deploymentResult.confirmed = false;
+    }
+    
+    // Cache deployment result with extended TTL
+    await cacheManager.set(`deployment_${sessionId}`, {
+      ...deploymentResult,
+      network: deploymentNetwork,
+      originalNetwork: network,
+      timestamp: new Date().toISOString()
+    }, 86400 * 7); // 7 days
+    
+    // Emit completion event
+    if (io) {
+      io.to(`deployment-${sessionId}`).emit('deployment-complete', {
+        sessionId,
+        success: true,
+        ...deploymentResult,
+        timestamp: new Date().toISOString()
       });
     }
     
-    // Cache deployment result
-    await cacheManager.set(`deployment_${sessionId}`, result, 86400); // 24 hours
+    logger.info(`Contract deployment completed successfully for session: ${sessionId}`);
     
-    // Emit completion event
-    io.to(`deployment-${sessionId}`).emit('deployment-complete', {
-      sessionId,
-      success: result.success,
-      ...result
-    });
-    
-    logger.info(`Contract deployment completed for session: ${sessionId}, Success: ${result.success}`);
-    
+    // Enhanced response with all relevant deployment information
     res.json({
-      success: result.success,
+      success: true,
       sessionId,
-      txHash: result.txHash,
-      contractAddress: result.contractAddress,
-      gasUsed: result.gasUsed,
-      deploymentCost: result.deploymentCost,
-      blockNumber: result.blockNumber,
-      network,
-      explorerUrl: result.explorerUrl,
-      message: result.message
+      txHash: deploymentResult.txHash,
+      transactionHash: deploymentResult.txHash,
+      contractAddress: deploymentResult.contractAddress,
+      gasUsed: deploymentResult.gasUsed,
+      gasPrice: deploymentResult.gasPrice,
+      deploymentCost: deploymentResult.deploymentCost,
+      deploymentTime: deploymentResult.deploymentTime,
+      blockNumber: deploymentResult.blockNumber,
+      network: deploymentResult.network,
+      networkKey: deploymentNetwork,
+      explorerUrl: deploymentResult.explorerUrl,
+      contractExplorerUrl: deploymentResult.contractExplorerUrl,
+      confirmed: deploymentResult.confirmed,
+      finalConfirmations: deploymentResult.finalConfirmations,
+      message: deploymentResult.message || 'Contract deployed successfully',
+      receipt: deploymentResult.receipt,
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
     logger.error(`Contract deployment failed for session ${sessionId}:`, error);
+    logger.error(`Stack trace:`, error.stack);
     
     const io = req.app.get('socketio');
-    io.to(`deployment-${sessionId}`).emit('deployment-error', {
-      sessionId,
-      error: error.message,
-      details: error.details || 'Unknown error occurred'
-    });
+    if (io) {
+      io.to(`deployment-${sessionId}`).emit('deployment-error', {
+        sessionId,
+        error: error.message,
+        details: error.details || error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
     
-    res.status(500).json({
+    // Cache error for debugging
+    await cacheManager.set(`deployment_error_${sessionId}`, {
+      error: error.message,
+      stack: error.stack,
+      deploymentResult,
+      timestamp: new Date().toISOString()
+    }, 86400);
+    
+    // Determine appropriate HTTP status code
+    let statusCode = 500;
+    if (error.message.includes('Invalid') || error.message.includes('validation')) {
+      statusCode = 400;
+    } else if (error.message.includes('Insufficient funds') || error.message.includes('balance')) {
+      statusCode = 402; // Payment Required
+    } else if (error.message.includes('network') || error.message.includes('RPC')) {
+      statusCode = 503; // Service Unavailable
+    }
+    
+    res.status(statusCode).json({
       success: false,
       sessionId,
       error: 'Deployment failed',
-      message: error.message
+      message: error.message,
+      details: error.details || 'Check logs for more information',
+      network: network,
+      timestamp: new Date().toISOString()
     });
   }
 });

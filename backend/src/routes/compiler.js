@@ -85,10 +85,12 @@ router.post('/vyper', validateCompilationRequest, async (req, res) => {
     });
     
     // Initialize compiler
-    const compiler = new VyperCompiler(version, optimization);
+    const compiler = new VyperCompiler();
     
     // Compile code
-    const result = await compiler.compile(code, {
+    const result = await compiler.compile(code, 'MyContract', {
+      optimization,
+      version,
       onProgress: (progress) => {
         io.to(`compilation-${sessionId}`).emit('compilation-progress', progress);
       }
