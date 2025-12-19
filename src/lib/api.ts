@@ -35,6 +35,31 @@ export interface DeployResponse {
   message?: string;
 }
 
+export interface ExecuteResponse {
+  success: boolean;
+  type?: 'read' | 'write';
+  result?: any;
+  txHash?: string;
+  blockNumber?: number;
+  gasUsed?: string;
+  explorerUrl?: string;
+  error?: string;
+  functionName?: string;
+  parameters?: any[];
+  contractAddress?: string;
+  network?: string;
+}
+
+export interface SimulateResponse {
+  success: boolean;
+  result?: any;
+  error?: string;
+  functionName?: string;
+  parameters?: any[];
+  contractAddress?: string;
+  network?: string;
+}
+
 // Simulate compilation delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -211,15 +236,115 @@ export async function deployContract(
 
 export async function executeFunction(
   contractAddress: string,
+  abi: any[],
   functionName: string,
-  args: unknown[]
-): Promise<{ success: boolean; result?: unknown; error?: string }> {
-  await delay(1500);
-  
-  return {
-    success: true,
-    result: '0x0000...0001',
-  };
+  parameters: any[] = [],
+  network: string = 'arbitrum_sepolia',
+  privateKey?: string,
+  options: {
+    gasLimit?: string;
+    gasPrice?: string;
+    value?: string;
+  } = {}
+): Promise<ExecuteResponse> {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/execute/function`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contractAddress,
+        abi,
+        functionName,
+        parameters,
+        network,
+        privateKey,
+        ...options
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        error: result.message || result.error || 'Function execution failed'
+      };
+    }
+
+    return {
+      success: result.success,
+      type: result.type,
+      result: result.result,
+      txHash: result.txHash,
+      blockNumber: result.blockNumber,
+      gasUsed: result.gasUsed,
+      explorerUrl: result.explorerUrl,
+      functionName: result.functionName,
+      parameters: result.parameters,
+      contractAddress: result.contractAddress,
+      network: result.network
+    };
+  } catch (error) {
+    console.error('Function execution API error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown execution error'
+    };
+  }
+}
+
+export async function simulateFunction(
+  contractAddress: string,
+  abi: any[],
+  functionName: string,
+  parameters: any[] = [],
+  network: string = 'arbitrum_sepolia'
+): Promise<SimulateResponse> {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    const response = await fetch(`${apiUrl}/api/v1/execute/simulate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contractAddress,
+        abi,
+        functionName,
+        parameters,
+        network
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        error: result.message || result.error || 'Function simulation failed'
+      };
+    }
+
+    return {
+      success: result.success,
+      result: result.result,
+      functionName: result.functionName,
+      parameters: result.parameters,
+      contractAddress: result.contractAddress,
+      network: result.network
+    };
+  } catch (error) {
+    console.error('Function simulation API error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown simulation error'
+    };
+  }
 }
 
 // New deployment monitoring functions

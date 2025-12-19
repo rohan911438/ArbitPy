@@ -50,6 +50,7 @@ import arbitPyMasterRoutes from './routes/arbitpy-master-simple.js';
 import deploymentRoutes from './routes/deployment.js';
 import compilerRoutes from './routes/compiler.js';
 import aiRoutes from './routes/ai.js';
+import executeRoutes from './routes/execute.js';
 
 // Simple logging
 const log = (message) => {
@@ -61,6 +62,7 @@ app.use('/api/v1/arbitpy-master', arbitPyMasterRoutes);
 app.use('/api/v1/deploy', deploymentRoutes);
 app.use('/api/v1/compile', compilerRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/execute', executeRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { compileToSolidity, compileToStylus, lintCode, deployContract } from '@/lib/api';
+import { useState } from 'react';
 
 export function Header() {
   const {
@@ -29,6 +30,8 @@ export function Header() {
     compiledSolidity,
     setSolidityCompilationResult,
     setRustCompilationResult,
+    solidityCompilationResult,
+    rustCompilationResult,
   } = useAppStore();
 
   const { connectedWallet, connect, isConnecting, disconnect } = useMetaMask();
@@ -186,10 +189,36 @@ export function Header() {
     }
   };
 
+  const [showRunPanel, setShowRunPanel] = useState(false);
+
   const handleRunFunction = () => {
+    // Check if we have compilation results
+    const compilationResult = solidityCompilationResult || rustCompilationResult;
+    
+    if (!compilationResult || !compilationResult.success) {
+      toast({
+        title: 'No Contract Available',
+        description: 'Please compile a contract first before running functions',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!compilationResult.abi || compilationResult.abi.length === 0) {
+      toast({
+        title: 'No ABI Available',
+        description: 'Contract ABI is required to execute functions',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Switch to the execution tab in output panel
+    setActiveOutputTab('execute');
+    
     toast({
-      title: 'Run Function',
-      description: 'Function execution feature coming soon',
+      title: 'Function Execution Ready',
+      description: 'Use the Execute tab to run contract functions',
     });
   };
 

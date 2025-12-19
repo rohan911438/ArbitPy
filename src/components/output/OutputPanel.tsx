@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
-import { Copy, Check, FileCode, Terminal, Braces, AlertTriangle, ScrollText, Rocket } from 'lucide-react';
+import { Copy, Check, FileCode, Terminal, Braces, AlertTriangle, ScrollText, Rocket, Play } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Editor from '@monaco-editor/react';
 import DeploymentPanel from './DeploymentPanel';
+import FunctionExecutionPanel from './FunctionExecutionPanel';
 
 const tabs = [
   { id: 'solidity', label: 'Solidity', icon: FileCode },
   { id: 'rust', label: 'Stylus/Rust', icon: Terminal },
   { id: 'abi', label: 'ABI', icon: Braces },
   { id: 'deploy', label: 'Deploy', icon: Rocket },
+  { id: 'execute', label: 'Execute', icon: Play },
   { id: 'linter', label: 'Linter', icon: AlertTriangle },
   { id: 'logs', label: 'Compile Log', icon: ScrollText },
 ];
@@ -38,6 +40,8 @@ export function OutputPanel() {
         return abiOutput || '// ABI will appear here after compilation';
       case 'deploy':
         return null; // Special case for deployment panel
+      case 'execute':
+        return null; // Special case for function execution panel
       default:
         return '';
     }
@@ -118,6 +122,8 @@ export function OutputPanel() {
           <LogsView logs={compileLogs} />
         ) : activeOutputTab === 'deploy' ? (
           <DeploymentPanel />
+        ) : activeOutputTab === 'execute' ? (
+          <FunctionExecutionPanel />
         ) : (
           <Editor
             height="100%"
