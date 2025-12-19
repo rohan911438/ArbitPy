@@ -160,8 +160,10 @@ router.post('/solidity', validateCompilationRequest, async (req, res) => {
       message: 'Converting to Solidity...'
     });
     
-    const compiler = new SolidityCompiler(version, optimization);
-    const result = await compiler.compile(code, {
+    const compiler = new SolidityCompiler();
+    const result = await compiler.compile(code, 'Contract', {
+      optimization,
+      version,
       onProgress: (progress) => {
         io.to(`compilation-${sessionId}`).emit('compilation-progress', progress);
       }
@@ -226,8 +228,12 @@ router.post('/rust', validateCompilationRequest, async (req, res) => {
       message: 'Converting to Rust for Stylus...'
     });
     
-    const compiler = new RustCompiler(optimization);
-    const result = await compiler.compile(code, {
+    const compiler = new RustCompiler();
+    const result = await compiler.compile({
+      code,
+      optimization,
+      target: 'stylus',
+      contractName: 'Contract',
       onProgress: (progress) => {
         io.to(`compilation-${sessionId}`).emit('compilation-progress', progress);
       }

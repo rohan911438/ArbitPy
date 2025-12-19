@@ -42,7 +42,7 @@ export async function compileToSolidity(pythonCode: string): Promise<CompileResp
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
-    const response = await fetch(`${apiUrl}/api/v1/compile/vyper`, {
+    const response = await fetch(`${apiUrl}/api/v1/compile/solidity`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export async function compileToSolidity(pythonCode: string): Promise<CompileResp
       body: JSON.stringify({
         code: pythonCode,
         optimization: true,
-        version: 'latest'
+        version: '0.8.19'
       }),
     });
 
