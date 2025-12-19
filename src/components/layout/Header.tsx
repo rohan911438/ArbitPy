@@ -223,91 +223,113 @@ export function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-      <div className="flex items-center gap-2">
-        <Zap className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium text-muted-foreground">
-          Python Smart Contract Editor
-        </span>
+    <header className="relative flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 shadow-lg">
+      {/* Background glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5" />
+      
+      <div className="relative flex items-center gap-3">
+        <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-400/20">
+          <Zap className="w-6 h-6 text-blue-400 drop-shadow-sm" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-lg font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-300 bg-clip-text text-transparent">
+            ArbitPy Playground
+          </span>
+          <span className="text-xs text-slate-400 font-medium">
+            Python → Smart Contract Compiler
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Compile Buttons */}
-        <button
-          onClick={handleCompileSolidity}
-          disabled={isCompiling}
-          className="action-button-primary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isCompiling ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <FileCode className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">Compile to Solidity</span>
-        </button>
+      <div className="relative flex items-center gap-3">
+        {/* Compile Section */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCompileSolidity}
+            disabled={isCompiling}
+            className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-emerald-500/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isCompiling ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileCode className="w-4 h-4 group-hover:rotate-3 transition-transform" />
+            )}
+            <span className="hidden sm:inline font-semibold">Solidity</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-300 opacity-0 group-hover:opacity-20 transition-opacity" />
+          </button>
 
-        <button
-          onClick={handleCompileStylus}
-          disabled={isCompiling}
-          className="action-button-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isCompiling ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Terminal className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">Compile to Stylus</span>
-        </button>
+          <button
+            onClick={handleCompileStylus}
+            disabled={isCompiling}
+            className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl border border-slate-600 hover:border-slate-500 transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isCompiling ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Terminal className="w-4 h-4 group-hover:rotate-3 transition-transform" />
+            )}
+            <span className="hidden sm:inline font-semibold">Stylus</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-slate-400 to-slate-300 opacity-0 group-hover:opacity-10 transition-opacity" />
+          </button>
+        </div>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-600 to-transparent mx-2" />
 
-        {/* Deploy & Run */}
-        <button
-          onClick={handleDeploy}
-          disabled={isDeploying || !connectedWallet}
-          className="action-button-accent disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isDeploying ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Rocket className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">Deploy</span>
-        </button>
+        {/* Deploy & Run Section */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDeploy}
+            disabled={isDeploying || !connectedWallet}
+            className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-orange-500/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isDeploying ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Rocket className="w-4 h-4 group-hover:translate-y-[-2px] transition-transform" />
+            )}
+            <span className="hidden sm:inline font-semibold">Deploy</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-orange-300 opacity-0 group-hover:opacity-20 transition-opacity" />
+          </button>
 
-        <button
-          onClick={handleRunFunction}
-          className="action-button-secondary"
-        >
-          <Play className="w-4 h-4" />
-          <span className="hidden sm:inline">Run Function</span>
-        </button>
+          <button
+            onClick={handleRunFunction}
+            className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-purple-500/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Play className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <span className="hidden sm:inline font-semibold">Execute</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-400 to-purple-300 opacity-0 group-hover:opacity-20 transition-opacity" />
+          </button>
+        </div>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-600 to-transparent mx-2" />
 
-        {/* Wallet */}
+        {/* Wallet Section */}
         {connectedWallet ? (
           <button
             onClick={disconnect}
-            className="action-button-secondary"
+            className="group relative flex items-center gap-3 px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-slate-600 hover:border-slate-500 backdrop-blur-sm transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="font-mono text-xs">
-              {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50 animate-pulse" />
+              <span className="font-mono text-sm font-semibold">
+                {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
+              </span>
+            </div>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-slate-400 to-slate-300 opacity-0 group-hover:opacity-10 transition-opacity" />
           </button>
         ) : (
           <button
             onClick={connect}
             disabled={isConnecting}
-            className="action-button-primary"
+            className="group relative flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-blue-500/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
           >
             {isConnecting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             )}
-            <span>Connect Wallet</span>
+            <span className="font-semibold">Connect Wallet</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400 to-blue-300 opacity-0 group-hover:opacity-20 transition-opacity" />
           </button>
         )}
       </div>
