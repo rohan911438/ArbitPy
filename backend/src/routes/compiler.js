@@ -2,7 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger.js';
 import { cacheManager } from '../utils/cache.js';
-import { validateCompilationRequest } from '../middleware/validation.js';
+import { validateCompilationRequest, validateSolidityCompilation, validateRustCompilation, validateVyperCompilation } from '../middleware/validation.js';
 import { VyperCompiler } from '../services/VyperCompiler.js';
 import { SolidityCompiler } from '../services/SolidityCompiler.js';
 import { RustCompiler } from '../services/RustCompiler.js';
@@ -57,7 +57,7 @@ const router = express.Router();
  *                 gasEstimate:
  *                   type: object
  */
-router.post('/vyper', validateCompilationRequest, async (req, res) => {
+router.post('/vyper', validateVyperCompilation, async (req, res) => {
   const sessionId = uuidv4();
   const { code, optimization = true, version = 'latest' } = req.body;
   
@@ -110,10 +110,24 @@ router.post('/vyper', validateCompilationRequest, async (req, res) => {
     
     logger.info(`Vyper compilation completed for session: ${sessionId}, Success: ${result.success}`);
     
-    res.json({
-      ...result,
-      sessionId
-    });
+    // Normalize response structure to match frontend expectations
+    const normalizedResponse = {
+      success: result.success,
+      sessionId,
+      output: result.vyperCode || result.output || '', // Use vyperCode as output
+      abi: result.abi || [],
+      bytecode: result.bytecode?.object || result.bytecode || '', // Extract object from nested bytecode
+      errors: result.error ? [result.error] : (result.errors || []),
+      warnings: result.warnings || [],
+      gasEstimate: result.gasEstimate || null,
+      // Include additional metadata for debugging
+      contractName: result.contractName,
+      compiler: result.compiler,
+      version: result.version,
+      compilationTime: result.compilationTime
+    };
+    
+    res.json(normalizedResponse);
     
   } catch (error) {
     logger.error(`Vyper compilation failed for session ${sessionId}:`, error);
@@ -127,6 +141,12 @@ router.post('/vyper', validateCompilationRequest, async (req, res) => {
     res.status(500).json({
       success: false,
       sessionId,
+      output: '',
+      abi: [],
+      bytecode: '',
+      errors: [error.message || 'Compilation failed'],
+      warnings: [],
+      gasEstimate: null,
       error: 'Compilation failed',
       message: error.message
     });
@@ -140,7 +160,7 @@ router.post('/vyper', validateCompilationRequest, async (req, res) => {
  *     summary: Compile Python-like code to Solidity
  *     tags: [Compilation]
  */
-router.post('/solidity', validateCompilationRequest, async (req, res) => {
+router.post('/solidity', validateSolidityCompilation, async (req, res) => {
   const sessionId = uuidv4();
   const { code, optimization = true, version = '0.8.19' } = req.body;
   
@@ -181,7 +201,25 @@ router.post('/solidity', validateCompilationRequest, async (req, res) => {
     
     logger.info(`Solidity compilation completed for session: ${sessionId}, Success: ${result.success}`);
     
-    res.json({ ...result, sessionId });
+    // Normalize response structure to match frontend expectations
+    const normalizedResponse = {
+      success: result.success,
+      sessionId,
+      output: result.sourceCode || result.output || '', // Use sourceCode as output
+      abi: result.abi || [],
+      bytecode: result.bytecode?.object || result.bytecode || '', // Extract object from nested bytecode
+      errors: result.error ? [result.error] : (result.errors || []),
+      warnings: result.warnings || [],
+      gasEstimate: result.gasEstimate || null,
+      // Include additional metadata for debugging
+      contractName: result.contractName,
+      compiler: result.compiler,
+      version: result.version,
+      compilationTime: result.compilationTime,
+      metadata: result.metadata
+    };
+    
+    res.json(normalizedResponse);
     
   } catch (error) {
     logger.error(`Solidity compilation failed for session ${sessionId}:`, error);
@@ -208,7 +246,7 @@ router.post('/solidity', validateCompilationRequest, async (req, res) => {
  *     summary: Compile Python-like code to Rust (Stylus)
  *     tags: [Compilation]
  */
-router.post('/rust', validateCompilationRequest, async (req, res) => {
+router.post('/rust', validateRustCompilation, async (req, res) => {
   const sessionId = uuidv4();
   const { code, optimization = true } = req.body;
   
@@ -251,7 +289,26 @@ router.post('/rust', validateCompilationRequest, async (req, res) => {
     
     logger.info(`Rust compilation completed for session: ${sessionId}, Success: ${result.success}`);
     
-    res.json({ ...result, sessionId });
+    // Normalize response structure to match frontend expectations
+    const normalizedResponse = {
+      success: result.success,
+      sessionId,
+      output: result.rustCode || result.output || '', // Use rustCode as output
+      abi: result.abi || [],
+      bytecode: result.wasmBytecode || result.wasm || result.bytecode || '', // Use WASM bytecode for Stylus
+      errors: result.error ? [result.error] : (result.errors || []),
+      warnings: result.warnings || [],
+      gasEstimate: result.gasEstimate || null,
+      // Include additional metadata for debugging
+      contractName: result.contractName,
+      compiler: result.compiler,
+      version: result.version,
+      compilationTime: result.compilationTime,
+      wasmBytecode: result.wasmBytecode,
+      target: result.target
+    };
+    
+    res.json(normalizedResponse);
     
   } catch (error) {
     logger.error(`Rust compilation failed for session ${sessionId}:`, error);
@@ -265,6 +322,12 @@ router.post('/rust', validateCompilationRequest, async (req, res) => {
     res.status(500).json({
       success: false,
       sessionId,
+      output: '',
+      abi: [],
+      bytecode: '',
+      errors: [error.message || 'Compilation failed'],
+      warnings: [],
+      gasEstimate: null,
       error: 'Compilation failed',
       message: error.message
     });

@@ -32,8 +32,11 @@ export class SolidityCompiler {
       // Generate mock compilation result
       const compilationTime = Date.now() - startTime + Math.random() * 100;
       
-      // Generate mock ABI
-      const abi = this.generateMockABI(sourceCode);
+      // Generate Solidity code from Python input
+      const solidityCode = this.generateMockSolidityCode(sourceCode, contractName);
+      
+      // Generate mock ABI based on the generated Solidity code
+      const abi = this.generateMockABI(solidityCode);
       
       // Generate mock bytecode
       const bytecode = this.generateMockBytecode(contractName);
@@ -47,6 +50,8 @@ export class SolidityCompiler {
         compiler: 'solidity',
         version: this.version,
         warnings: null,
+        output: solidityCode,
+        solidityCode,
         abi,
         bytecode: {
           object: bytecode,
@@ -199,6 +204,110 @@ export class SolidityCompiler {
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
+  }
+
+  /**
+   * Generate mock Solidity code from Python-like input
+   * @param {string} pythonCode - Python-like source code
+   * @param {string} contractName - Name of the contract
+   * @returns {string} Generated Solidity code
+   */
+  generateMockSolidityCode(pythonCode, contractName) {
+    return `// SPDX-License-Identifier: MIT
+// ${contractName} - Compiled from Python to Solidity
+pragma solidity ^${this.version};
+
+/**
+ * @title ${contractName}
+ * @dev Smart contract compiled from Python-like syntax
+ */
+contract ${contractName} {
+    
+    // State variables
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) public allowances;
+    
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+    
+    address public owner;
+    
+    // Events
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    
+    // Modifiers
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the owner");
+        _;
+    }
+    
+    /**
+     * @dev Constructor - Initialize the contract
+     */
+    constructor() {
+        name = "${contractName}";
+        symbol = "TKN";
+        decimals = 18;
+        totalSupply = 1000000 * 10**decimals;
+        owner = msg.sender;
+        balances[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
+    }
+    
+    /**
+     * @dev Get balance of an address
+     * @param account The address to query
+     * @return The balance of the specified address
+     */
+    function balanceOf(address account) public view returns (uint256) {
+        return balances[account];
+    }
+    
+    /**
+     * @dev Transfer tokens to another address
+     * @param to The recipient address
+     * @param amount The amount to transfer
+     * @return success Whether the transfer was successful
+     */
+    function transfer(address to, uint256 amount) public returns (bool) {
+        require(to != address(0), "Transfer to zero address");
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        
+        balances[msg.sender] -= amount;
+        balances[to] += amount;
+        
+        emit Transfer(msg.sender, to, amount);
+        return true;
+    }
+    
+    /**
+     * @dev Mint new tokens (only owner)
+     * @param to The recipient address
+     * @param amount The amount to mint
+     */
+    function mint(address to, uint256 amount) public onlyOwner {
+        require(to != address(0), "Mint to zero address");
+        
+        totalSupply += amount;
+        balances[to] += amount;
+        
+        emit Transfer(address(0), to, amount);
+    }
+    
+    /**
+     * @dev Transfer ownership (only owner)
+     * @param newOwner The new owner address
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "New owner is zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}`;
   }
 
   /**

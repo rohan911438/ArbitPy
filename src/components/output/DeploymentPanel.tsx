@@ -7,13 +7,9 @@ import { Progress } from '../ui/progress';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, Copy, RefreshCw } from 'lucide-react';
 import { deployContract, getDeploymentStatus, getTransactionDetails, estimateDeploymentGas } from '../../lib/api';
 import { useToast } from '../../hooks/use-toast';
+import { useAppStore } from '../../stores/appStore';
 
 interface DeploymentPanelProps {
-  compilationResult?: {
-    bytecode: string;
-    abi: any[];
-    output: string;
-  };
   network?: string;
 }
 
@@ -35,9 +31,9 @@ interface DeploymentState {
 }
 
 const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ 
-  compilationResult, 
   network = 'arbitrum_sepolia' 
 }) => {
+  const { activeOutputTab, solidityCompilationResult, rustCompilationResult } = useAppStore();
   const [deployment, setDeployment] = useState<DeploymentState>({
     status: 'idle',
     progress: 0,
@@ -49,6 +45,18 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({
   const [gasEstimate, setGasEstimate] = useState<any>(null);
   const [isEstimatingGas, setIsEstimatingGas] = useState(false);
   const { toast } = useToast();
+
+  // Get current compilation result based on active tab
+  const getCurrentCompilationResult = () => {
+    if (activeOutputTab === 'solidity' || activeOutputTab === 'vyper') {
+      return solidityCompilationResult;
+    } else if (activeOutputTab === 'rust') {
+      return rustCompilationResult;
+    }
+    return null;
+  };
+
+  const compilationResult = getCurrentCompilationResult();
 
   const stages = [
     { key: 'validation', label: 'Validation', progress: 10 },
@@ -106,10 +114,28 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({
   };
 
   const handleDeploy = async () => {
-    if (!compilationResult || !privateKey) {
+    if (!compilationResult) {
       toast({
-        title: 'Missing Information',
-        description: 'Please provide compilation result and private key',
+        title: 'No Compilation Result',
+        description: 'Please compile your contract first before deploying',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!compilationResult.success || !compilationResult.bytecode || !compilationResult.abi) {
+      toast({
+        title: 'Invalid Compilation Result',
+        description: 'Compilation artifacts are missing or invalid. Please recompile your contract.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!privateKey) {
+      toast({
+        title: 'Missing Private Key',
+        description: 'Please provide a private key for deployment',
         variant: 'destructive',
       });
       return;

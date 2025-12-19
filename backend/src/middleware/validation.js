@@ -2,10 +2,34 @@ import Joi from 'joi';
 import { logger } from '../utils/logger.js';
 
 // Validation schemas
+const baseSolidityCompilationSchema = Joi.object({
+  code: Joi.string().required().min(1).max(50000),
+  optimization: Joi.boolean().default(true),
+  version: Joi.string().default('latest'),
+  contractName: Joi.string().default('Contract')
+});
+
+const baseRustCompilationSchema = Joi.object({
+  code: Joi.string().required().min(1).max(50000),
+  optimization: Joi.boolean().default(true),
+  target: Joi.string().valid('stylus').default('stylus'),
+  contractName: Joi.string().default('Contract')
+});
+
+const baseVyperCompilationSchema = Joi.object({
+  code: Joi.string().required().min(1).max(50000),
+  optimization: Joi.boolean().default(true),
+  version: Joi.string().default('latest'),
+  contractName: Joi.string().default('Contract')
+});
+
+// Generic compilation schema for backward compatibility
 const compilationSchema = Joi.object({
   code: Joi.string().required().min(1).max(50000),
   optimization: Joi.boolean().default(true),
-  version: Joi.string().default('latest')
+  version: Joi.string().default('latest'),
+  target: Joi.string().optional(),
+  contractName: Joi.string().default('Contract')
 });
 
 const deploymentSchema = Joi.object({
@@ -33,15 +57,93 @@ const aiRequestSchema = Joi.object({
 
 // Validation middleware functions
 export const validateCompilationRequest = (req, res, next) => {
-  const { error, value } = compilationSchema.validate(req.body);
+  const { error, value } = compilationSchema.validate(req.body, { allowUnknown: false });
   
   if (error) {
-    logger.warn(`Compilation validation failed: ${error.details[0].message}`);
+    const errorMessage = error.details[0].message;
+    const field = error.details[0].path.join('.');
+    logger.warn(`Compilation validation failed for ${req.method} ${req.path}: ${errorMessage}`, {
+      field,
+      body: req.body,
+      userAgent: req.get('User-Agent')
+    });
     return res.status(400).json({
       success: false,
       error: 'Validation failed',
-      message: error.details[0].message,
-      field: error.details[0].path[0]
+      message: errorMessage,
+      field,
+      details: error.details.map(detail => ({
+        message: detail.message,
+        path: detail.path.join('.'),
+        value: detail.context?.value
+      }))
+    });
+  }
+  
+  req.body = value;
+  next();
+};
+
+// Specific validation functions for different compilation types
+export const validateSolidityCompilation = (req, res, next) => {
+  const { error, value } = baseSolidityCompilationSchema.validate(req.body);
+  
+  if (error) {
+    const errorMessage = error.details[0].message;
+    const field = error.details[0].path.join('.');
+    logger.warn(`Solidity compilation validation failed: ${errorMessage}`, {
+      field,
+      body: req.body
+    });
+    return res.status(400).json({
+      success: false,
+      error: 'Solidity validation failed',
+      message: errorMessage,
+      field
+    });
+  }
+  
+  req.body = value;
+  next();
+};
+
+export const validateRustCompilation = (req, res, next) => {
+  const { error, value } = baseRustCompilationSchema.validate(req.body);
+  
+  if (error) {
+    const errorMessage = error.details[0].message;
+    const field = error.details[0].path.join('.');
+    logger.warn(`Rust compilation validation failed: ${errorMessage}`, {
+      field,
+      body: req.body
+    });
+    return res.status(400).json({
+      success: false,
+      error: 'Rust validation failed',
+      message: errorMessage,
+      field
+    });
+  }
+  
+  req.body = value;
+  next();
+};
+
+export const validateVyperCompilation = (req, res, next) => {
+  const { error, value } = baseVyperCompilationSchema.validate(req.body);
+  
+  if (error) {
+    const errorMessage = error.details[0].message;
+    const field = error.details[0].path.join('.');
+    logger.warn(`Vyper compilation validation failed: ${errorMessage}`, {
+      field,
+      body: req.body
+    });
+    return res.status(400).json({
+      success: false,
+      error: 'Vyper validation failed',
+      message: errorMessage,
+      field
     });
   }
   

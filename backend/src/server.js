@@ -15,7 +15,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],
+    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost:8081"],
     methods: ["GET", "POST"]
   }
 });
@@ -27,7 +27,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],
+  origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost:8081"],
   credentials: true
 }));
 

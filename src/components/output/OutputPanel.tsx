@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/stores/appStore';
-import { Copy, Check, FileCode, Terminal, Braces, AlertTriangle, ScrollText } from 'lucide-react';
+import { Copy, Check, FileCode, Terminal, Braces, AlertTriangle, ScrollText, Rocket } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Editor from '@monaco-editor/react';
+import DeploymentPanel from './DeploymentPanel';
 
 const tabs = [
   { id: 'solidity', label: 'Solidity', icon: FileCode },
   { id: 'rust', label: 'Stylus/Rust', icon: Terminal },
   { id: 'abi', label: 'ABI', icon: Braces },
+  { id: 'deploy', label: 'Deploy', icon: Rocket },
   { id: 'linter', label: 'Linter', icon: AlertTriangle },
   { id: 'logs', label: 'Compile Log', icon: ScrollText },
 ];
@@ -34,6 +36,8 @@ export function OutputPanel() {
         return compiledRust || '// Compiled Stylus/Rust will appear here\n// Click "Compile to Stylus" to start';
       case 'abi':
         return abiOutput || '// ABI will appear here after compilation';
+      case 'deploy':
+        return null; // Special case for deployment panel
       default:
         return '';
     }
@@ -112,6 +116,8 @@ export function OutputPanel() {
           <LinterView warnings={linterWarnings} />
         ) : activeOutputTab === 'logs' ? (
           <LogsView logs={compileLogs} />
+        ) : activeOutputTab === 'deploy' ? (
+          <DeploymentPanel />
         ) : (
           <Editor
             height="100%"

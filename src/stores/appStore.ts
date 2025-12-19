@@ -21,6 +21,17 @@ export interface DeployLog {
   contractAddress?: string;
 }
 
+export interface CompilationResult {
+  success: boolean;
+  output: string;
+  abi?: any[];
+  bytecode?: string;
+  errors?: string[];
+  warnings?: string[];
+  gasEstimate?: any;
+  timestamp?: Date;
+}
+
 interface AppState {
   // Editor state
   editorCode: string;
@@ -33,6 +44,12 @@ interface AppState {
   setCompiledRust: (code: string) => void;
   abiOutput: string;
   setAbiOutput: (abi: string) => void;
+  
+  // Compilation artifacts for deployment
+  solidityCompilationResult: CompilationResult | null;
+  setSolidityCompilationResult: (result: CompilationResult | null) => void;
+  rustCompilationResult: CompilationResult | null;
+  setRustCompilationResult: (result: CompilationResult | null) => void;
 
   // Linter
   linterWarnings: LinterWarning[];
@@ -129,6 +146,12 @@ export const useAppStore = create<AppState>((set) => ({
   setCompiledRust: (code) => set({ compiledRust: code }),
   abiOutput: '',
   setAbiOutput: (abi) => set({ abiOutput: abi }),
+  
+  // Compilation artifacts
+  solidityCompilationResult: null,
+  setSolidityCompilationResult: (result) => set({ solidityCompilationResult: result }),
+  rustCompilationResult: null,
+  setRustCompilationResult: (result) => set({ rustCompilationResult: result }),
 
   linterWarnings: [],
   setLinterWarnings: (warnings) => set({ linterWarnings: warnings }),

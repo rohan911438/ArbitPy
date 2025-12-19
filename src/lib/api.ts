@@ -68,7 +68,7 @@ export async function compileToSolidity(pythonCode: string): Promise<CompileResp
       success: result.success,
       output: result.output || result.solidityCode || '',
       abi: result.abi,
-      bytecode: result.bytecode,
+      bytecode: result.bytecode?.object || result.bytecode,
       errors: result.errors || [],
       warnings: result.warnings || [],
       gasEstimate: result.gasEstimate
@@ -112,7 +112,8 @@ export async function compileToStylus(pythonCode: string): Promise<CompileRespon
     return {
       success: result.success,
       output: result.output || result.rustCode || '',
-      bytecode: result.wasm || result.bytecode,
+      abi: result.abi,
+      bytecode: result.wasmBytecode || result.wasm || result.bytecode,
       errors: result.errors || [],
       warnings: result.warnings || [],
       gasEstimate: result.gasEstimate

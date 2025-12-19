@@ -27,6 +27,8 @@ export function Header() {
     isDeploying,
     setIsDeploying,
     compiledSolidity,
+    setSolidityCompilationResult,
+    setRustCompilationResult,
   } = useAppStore();
 
   const { connectedWallet, connect, isConnecting, disconnect } = useMetaMask();
@@ -55,7 +57,14 @@ export function Header() {
       
       if (result.success) {
         setCompiledSolidity(result.output);
-        if (result.abi) setAbiOutput(result.abi);
+        if (result.abi) setAbiOutput(JSON.stringify(result.abi, null, 2));
+        
+        // Store the complete compilation result for deployment
+        setSolidityCompilationResult({
+          ...result,
+          timestamp: new Date()
+        });
+        
         addCompileLog({ type: 'success', message: 'Solidity compilation successful!' });
         setActiveOutputTab('solidity');
         toast({
@@ -63,6 +72,8 @@ export function Header() {
           description: 'Python code compiled to Solidity',
         });
       } else {
+        // Clear previous compilation result on failure
+        setSolidityCompilationResult(null);
         addCompileLog({ type: 'error', message: result.errors?.join('\n') || 'Compilation failed' });
         toast({
           title: 'Compilation Failed',
@@ -91,11 +102,27 @@ export function Header() {
       
       if (result.success) {
         setCompiledRust(result.output);
+        
+        // Store the complete compilation result for deployment
+        setRustCompilationResult({
+          ...result,
+          timestamp: new Date()
+        });
+        
         addCompileLog({ type: 'success', message: 'Stylus compilation successful!' });
         setActiveOutputTab('rust');
         toast({
           title: 'Compilation Successful',
           description: 'Python code compiled to Stylus/Rust',
+        });
+      } else {
+        // Clear previous compilation result on failure
+        setRustCompilationResult(null);
+        addCompileLog({ type: 'error', message: result.errors?.join('\n') || 'Stylus compilation failed' });
+        toast({
+          title: 'Compilation Failed',
+          description: 'Check the compile log for details',
+          variant: 'destructive',
         });
       }
     } catch (error) {
