@@ -42,6 +42,60 @@ const deploymentSchema = Joi.object({
   privateKey: Joi.string().pattern(/^0x[a-fA-F0-9]{64}$/)
 });
 
+// Enhanced deployment validation with strict bytecode checks
+const strictDeploymentValidation = (bytecode, abi, constructorParams) => {
+  const errors = [];
+
+  // 1. Bytecode existence and format
+  if (!bytecode || typeof bytecode !== 'string') {
+    errors.push('Bytecode must be a valid hex string');
+    return errors;
+  }
+
+  // 2. Must start with 0x
+  if (!bytecode.startsWith('0x')) {
+    errors.push('Bytecode must start with 0x');
+    return errors;
+  }
+
+  // 3. Minimum length check (reject if < 10 chars total, meaning < 8 hex chars)
+  if (bytecode.length < 10) {
+    errors.push(`Bytecode too short (${bytecode.length} chars). Minimum 10 characters required.`);
+    return errors;
+  }
+
+  // 4. Even length check (hex strings must have even number of hex digits)
+  const hexPart = bytecode.slice(2);
+  if (hexPart.length % 2 !== 0) {
+    errors.push(`Bytecode has odd length (${hexPart.length} hex digits). Must be even.`);
+    return errors;
+  }
+
+  // 5. Valid hex check
+  if (!/^[a-fA-F0-9]+$/.test(hexPart)) {
+    errors.push('Bytecode contains invalid hex characters');
+    return errors;
+  }
+
+  // 6. ABI validation
+  if (!Array.isArray(abi)) {
+    errors.push('ABI must be a valid array');
+    return errors;
+  }
+
+  // 7. Constructor args validation
+  const constructor = abi.find(item => item.type === 'constructor');
+  const expectedArgsCount = constructor ? constructor.inputs.length : 0;
+  const providedArgsCount = constructorParams ? constructorParams.length : 0;
+
+  if (expectedArgsCount !== providedArgsCount) {
+    errors.push(`Constructor args mismatch: expected ${expectedArgsCount}, provided ${providedArgsCount}`);
+    return errors;
+  }
+
+  return errors;
+};
+
 const aiRequestSchema = Joi.object({
   message: Joi.string().required().min(1).max(4000),
   context: Joi.string().max(10000).default(''),
@@ -179,6 +233,20 @@ export const validateDeploymentRequest = (req, res, next) => {
       message: helpfulMessage,
       field: errorDetail.path[0],
       originalMessage: errorDetail.message
+    });
+  }
+
+  // Apply strict deployment validation
+  const { bytecode, abi, constructorParams } = value;
+  const strictErrors = strictDeploymentValidation(bytecode, abi, constructorParams);
+  
+  if (strictErrors.length > 0) {
+    logger.warn(`Strict deployment validation failed: ${strictErrors.join(', ')}`);
+    return res.status(400).json({
+      success: false,
+      error: 'Strict validation failed',
+      message: `Deployment validation failed: ${strictErrors[0]}`,
+      details: strictErrors
     });
   }
   
