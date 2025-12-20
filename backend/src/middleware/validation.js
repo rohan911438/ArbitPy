@@ -35,7 +35,7 @@ const compilationSchema = Joi.object({
 const deploymentSchema = Joi.object({
   bytecode: Joi.string().required().pattern(/^0x[a-fA-F0-9]+$/),
   abi: Joi.array().required(),
-  network: Joi.string().valid('mainnet', 'sepolia', 'goerli').default('sepolia'),
+  network: Joi.string().valid('mainnet', 'sepolia', 'goerli', 'arbitrum_sepolia', 'arbitrum_mainnet', 'arbitrum').default('arbitrum_sepolia'),
   constructorParams: Joi.array().default([]),
   gasLimit: Joi.string().pattern(/^[0-9]+$/),
   gasPrice: Joi.string().pattern(/^[0-9]+$/),
@@ -155,12 +155,30 @@ export const validateDeploymentRequest = (req, res, next) => {
   const { error, value } = deploymentSchema.validate(req.body);
   
   if (error) {
-    logger.warn(`Deployment validation failed: ${error.details[0].message}`);
+    const errorDetail = error.details[0];
+    logger.warn(`Deployment validation failed: "${errorDetail.path[0]}" with value "${errorDetail.context?.value}" ${errorDetail.message}`);
+    
+    // Provide helpful error messages for common issues
+    let helpfulMessage = errorDetail.message;
+    if (errorDetail.path[0] === 'bytecode' && errorDetail.context?.value && !errorDetail.context.value.startsWith('0x')) {
+      helpfulMessage = 'Bytecode must be compiled contract bytecode (hex string starting with 0x), not source code. Please compile your contract first.';
+    } else if (errorDetail.path[0] === 'privateKey') {
+      const pkValue = errorDetail.context?.value;
+      if (pkValue && pkValue.length > 66) {
+        helpfulMessage = `Private key is too long (${pkValue.length} characters). It should be exactly 66 characters (0x + 64 hex digits). Please check for duplicates or extra text.`;
+      } else if (pkValue && pkValue.length < 66) {
+        helpfulMessage = `Private key is too short (${pkValue.length} characters). It should be exactly 66 characters (0x + 64 hex digits).`;
+      } else {
+        helpfulMessage = 'Private key must be a valid 64-character hex string with 0x prefix (total 66 characters).';
+      }
+    }
+    
     return res.status(400).json({
       success: false,
       error: 'Validation failed',
-      message: error.details[0].message,
-      field: error.details[0].path[0]
+      message: helpfulMessage,
+      field: errorDetail.path[0],
+      originalMessage: errorDetail.message
     });
   }
   

@@ -201,13 +201,38 @@ router.post('/solidity', validateSolidityCompilation, async (req, res) => {
     
     logger.info(`Solidity compilation completed for session: ${sessionId}, Success: ${result.success}`);
     
+    // Debug logging to identify bytecode issues
+    console.log('=== COMPILATION RESULT DEBUG ===');
+    console.log('Result success:', result.success);
+    console.log('Result keys:', Object.keys(result));
+    console.log('Bytecode type:', typeof result.bytecode);
+    console.log('Bytecode value:', result.bytecode);
+    console.log('Bytecode object:', result.bytecode?.object);
+    console.log('Bytecode length:', result.bytecode?.object?.length || result.bytecode?.length);
+    console.log('Bytecode hex length (after 0x):', (result.bytecode?.object || result.bytecode)?.slice(2)?.length);
+    console.log('Bytecode has even length:', ((result.bytecode?.object || result.bytecode)?.slice(2)?.length % 2 === 0));
+    console.log('Source code present:', !!result.sourceCode);
+    console.log('Original code present:', !!result.originalCode);
+    console.log('=== END DEBUG ===');
+    
     // Normalize response structure to match frontend expectations
+    // Extract bytecode.object exactly as provided by the compiler service
+    const extractedBytecode = result.bytecode?.object || result.bytecode || '';
+    
+    // Validate extracted bytecode but don't modify it
+    if (extractedBytecode && extractedBytecode.startsWith('0x')) {
+      const hexPart = extractedBytecode.slice(2);
+      if (hexPart.length % 2 !== 0) {
+        console.error('WARNING: Extracted bytecode has odd length, this should not happen with real compiler output');
+      }
+    }
+    
     const normalizedResponse = {
       success: result.success,
       sessionId,
-      output: result.sourceCode || result.output || '', // Use sourceCode as output
+      output: result.solidityCode || result.output || '', // Use solidityCode as output
       abi: result.abi || [],
-      bytecode: result.bytecode?.object || result.bytecode || '', // Extract object from nested bytecode
+      bytecode: extractedBytecode, // Use exact bytecode from compiler service
       errors: result.error ? [result.error] : (result.errors || []),
       warnings: result.warnings || [],
       gasEstimate: result.gasEstimate || null,
@@ -218,6 +243,18 @@ router.post('/solidity', validateSolidityCompilation, async (req, res) => {
       compilationTime: result.compilationTime,
       metadata: result.metadata
     };
+    
+    // Additional debugging for normalized response
+    console.log('=== NORMALIZED RESPONSE DEBUG ===');
+    console.log('Normalized bytecode:', normalizedResponse.bytecode);
+    console.log('Normalized bytecode type:', typeof normalizedResponse.bytecode);
+    console.log('Normalized bytecode starts with 0x:', normalizedResponse.bytecode?.startsWith('0x'));
+    console.log('Normalized bytecode length:', normalizedResponse.bytecode?.length);
+    console.log('Normalized bytecode hex length:', normalizedResponse.bytecode?.slice(2)?.length);
+    console.log('Normalized bytecode has even length:', (normalizedResponse.bytecode?.slice(2)?.length % 2 === 0));
+    console.log('First 100 chars:', normalizedResponse.bytecode?.substring(0, 100));
+    console.log('Last 20 chars:', normalizedResponse.bytecode?.slice(-20));
+    console.log('=== END NORMALIZED DEBUG ===');
     
     res.json(normalizedResponse);
     

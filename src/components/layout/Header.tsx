@@ -7,7 +7,11 @@ import {
   Wallet, 
   Loader2,
   Zap,
-  Terminal
+  Terminal,
+  AlertTriangle,
+  CheckCircle,
+  Network,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { compileToSolidity, compileToStylus, lintCode, deployContract } from '@/lib/api';
@@ -34,7 +38,19 @@ export function Header() {
     rustCompilationResult,
   } = useAppStore();
 
-  const { connectedWallet, connect, isConnecting, disconnect } = useMetaMask();
+  const { 
+    connectedWallet, 
+    connect, 
+    disconnect, 
+    isConnecting, 
+    isConnected,
+    network,
+    balance,
+    error,
+    isNetworkSupported,
+    switchToArbitrum,
+    getNetworkInfo 
+  } = useMetaMask();
 
   const handleCompileSolidity = async () => {
     setIsCompiling(true);
@@ -304,22 +320,96 @@ export function Header() {
         <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-600 to-transparent mx-2" />
 
         {/* Wallet Section */}
-        {connectedWallet ? (
-          <button
-            onClick={disconnect}
-            className="group relative flex items-center gap-3 px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-slate-600 hover:border-slate-500 backdrop-blur-sm transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50 animate-pulse" />
-              <span className="font-mono text-sm font-semibold">
-                {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
-              </span>
+        {isConnected && connectedWallet ? (
+          <div className="flex items-center gap-2">
+            {/* Network Status */}
+            {!isNetworkSupported() && (
+              <button
+                onClick={() => switchToArbitrum('sepolia')}
+                className="group relative flex items-center gap-2 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg transition-all duration-300 border border-amber-500/40"
+                title="Switch to Arbitrum Sepolia"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-xs font-medium">Wrong Network</span>
+              </button>
+            )}
+            
+            {/* Connected Wallet Info */}
+            <div className="group relative">
+              <button
+                onClick={disconnect}
+                className="flex items-center gap-3 px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl border border-slate-600 hover:border-slate-500 backdrop-blur-sm transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-2">
+                  {/* Status Indicator */}
+                  <div className={`w-2.5 h-2.5 rounded-full shadow-lg animate-pulse ${
+                    isNetworkSupported() 
+                      ? 'bg-emerald-400 shadow-emerald-400/50' 
+                      : 'bg-amber-400 shadow-amber-400/50'
+                  }`} />
+                  
+                  {/* Wallet Address */}
+                  <div className="flex flex-col items-start">
+                    <span className="font-mono text-sm font-semibold">
+                      {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
+                    </span>
+                    {network && (
+                      <span className="text-xs text-slate-400">
+                        {network}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Balance */}
+                  {balance && (
+                    <div className="text-right">
+                      <span className="text-xs text-slate-300 font-mono">
+                        {parseFloat(balance).toFixed(4)} ETH
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-slate-400 to-slate-300 opacity-0 group-hover:opacity-10 transition-opacity" />
+              </button>
+              
+              {/* Tooltip/Dropdown with more info */}
+              <div className="absolute top-full right-0 mt-2 p-3 bg-slate-800 rounded-lg shadow-xl border border-slate-600 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200 z-50 min-w-[200px]">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Network:</span>
+                    <span className="text-slate-200">{network || 'Unknown'}</span>
+                  </div>
+                  {balance && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Balance:</span>
+                      <span className="text-slate-200 font-mono">{parseFloat(balance).toFixed(6)} ETH</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Status:</span>
+                    <span className={`flex items-center gap-1 ${
+                      isNetworkSupported() ? 'text-emerald-400' : 'text-amber-400'
+                    }`}>
+                      {isNetworkSupported() ? (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          Connected
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-3 h-3" />
+                          Wrong Network
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-slate-400 to-slate-300 opacity-0 group-hover:opacity-10 transition-opacity" />
-          </button>
+          </div>
         ) : (
           <button
-            onClick={connect}
+            onClick={() => connect('sepolia')}
             disabled={isConnecting}
             className="group relative flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-blue-500/25 hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -328,9 +418,21 @@ export function Header() {
             ) : (
               <Wallet className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             )}
-            <span className="font-semibold">Connect Wallet</span>
+            <span className="font-semibold">
+              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+            </span>
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400 to-blue-300 opacity-0 group-hover:opacity-20 transition-opacity" />
           </button>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="absolute top-full right-0 mt-2 p-3 bg-red-900/80 text-red-300 rounded-lg shadow-xl border border-red-600 max-w-xs text-sm">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          </div>
         )}
       </div>
     </header>

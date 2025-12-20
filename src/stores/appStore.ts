@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { ethers } from 'ethers';
 
 export interface LinterWarning {
   line: number;
@@ -30,6 +31,43 @@ export interface CompilationResult {
   warnings?: string[];
   gasEstimate?: any;
   timestamp?: Date;
+}
+
+// Arbitrum network configurations
+export const ARBITRUM_NETWORKS = {
+  sepolia: {
+    chainId: '0x66eee',
+    chainName: 'Arbitrum Sepolia',
+    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://sepolia.arbiscan.io/'],
+  },
+  mainnet: {
+    chainId: '0xa4b1',
+    chainName: 'Arbitrum One',
+    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://arbiscan.io/'],
+  },
+};
+
+// Wallet state interfaces
+export interface WalletState {
+  isConnected: boolean;
+  isConnecting: boolean;
+  connectedWallet: string | null;
+  provider: ethers.BrowserProvider | null;
+  signer: ethers.JsonRpcSigner | null;
+  chainId: string | null;
+  network: string | null;
+  balance: string | null;
+  error: string | null;
+}
+
+export interface NetworkInfo {
+  chainId: string;
+  name: string;
+  isSupported: boolean;
 }
 
 interface AppState {
@@ -64,7 +102,19 @@ interface AppState {
   addDeployLog: (log: Omit<DeployLog, 'timestamp'>) => void;
   clearDeployLogs: () => void;
 
-  // Wallet
+  // Wallet State
+  wallet: WalletState;
+  
+  // Wallet Actions
+  setWalletConnecting: (connecting: boolean) => void;
+  setWalletConnected: (address: string, provider: ethers.BrowserProvider, signer: ethers.JsonRpcSigner) => void;
+  setWalletDisconnected: () => void;
+  updateWalletNetwork: (chainId: string, network: string) => void;
+  updateWalletBalance: (balance: string) => void;
+  setWalletError: (error: string | null) => void;
+  getNetworkInfo: () => NetworkInfo;
+  
+  // Legacy support (keeping for backward compatibility)
   connectedWallet: string | null;
   setConnectedWallet: (address: string | null) => void;
 
@@ -170,8 +220,91 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   clearDeployLogs: () => set({ deployLogs: [] }),
 
+  // Initial wallet state
+  wallet: {
+    isConnected: false,
+    isConnecting: false,
+    connectedWallet: null,
+    provider: null,
+    signer: null,
+    chainId: null,
+    network: null,
+    balance: null,
+    error: null,
+  },
+  
+  // Wallet actions
+  setWalletConnecting: (connecting) => 
+    set((state) => ({ 
+      wallet: { ...state.wallet, isConnecting: connecting, error: null } 
+    })),
+  
+  setWalletConnected: (address, provider, signer) =>
+    set((state) => ({
+      wallet: {
+        ...state.wallet,
+        isConnected: true,
+        isConnecting: false,
+        connectedWallet: address,
+        provider,
+        signer,
+        error: null,
+      },
+      connectedWallet: address, // Legacy support
+    })),
+  
+  setWalletDisconnected: () =>
+    set((state) => ({
+      wallet: {
+        ...state.wallet,
+        isConnected: false,
+        isConnecting: false,
+        connectedWallet: null,
+        provider: null,
+        signer: null,
+        chainId: null,
+        network: null,
+        balance: null,
+        error: null,
+      },
+      connectedWallet: null, // Legacy support
+    })),
+  
+  updateWalletNetwork: (chainId, network) =>
+    set((state) => ({
+      wallet: { ...state.wallet, chainId, network }
+    })),
+  
+  updateWalletBalance: (balance) =>
+    set((state) => ({
+      wallet: { ...state.wallet, balance }
+    })),
+  
+  setWalletError: (error) =>
+    set((state) => ({
+      wallet: { ...state.wallet, error, isConnecting: false }
+    })),
+  
+  getNetworkInfo: () => {
+    const state = useAppStore.getState();
+    const chainId = state.wallet.chainId;
+    
+    if (chainId === ARBITRUM_NETWORKS.sepolia.chainId) {
+      return { chainId, name: 'Arbitrum Sepolia', isSupported: true };
+    } else if (chainId === ARBITRUM_NETWORKS.mainnet.chainId) {
+      return { chainId, name: 'Arbitrum Mainnet', isSupported: true };
+    } else {
+      return { chainId: chainId || 'Unknown', name: 'Unknown Network', isSupported: false };
+    }
+  },
+  
+  // Legacy support
   connectedWallet: null,
-  setConnectedWallet: (address) => set({ connectedWallet: address }),
+  setConnectedWallet: (address) => 
+    set((state) => ({ 
+      connectedWallet: address,
+      wallet: { ...state.wallet, connectedWallet: address }
+    })),
 
   activeOutputTab: 'solidity',
   setActiveOutputTab: (tab) => set({ activeOutputTab: tab }),

@@ -55,6 +55,17 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
     privateKey
   } = req.body;
   
+  // Debug logging to see exactly what we received
+  console.log('=== DEPLOYMENT REQUEST DEBUG ===');
+  console.log('Received bytecode type:', typeof bytecode);
+  console.log('Received bytecode starts with 0x:', bytecode?.startsWith('0x'));
+  console.log('Received bytecode length:', bytecode?.length);
+  console.log('Received bytecode hex length:', bytecode?.slice(2)?.length);
+  console.log('Received bytecode has even length:', (bytecode?.slice(2)?.length % 2 === 0));
+  console.log('Received bytecode (first 100 chars):', bytecode?.substring(0, 100));
+  console.log('Received ABI length:', abi?.length);
+  console.log('=== END DEPLOYMENT DEBUG ===');
+  
   let deploymentResult = null;
   
   try {
@@ -99,9 +110,29 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
     
     logger.info(`Deploying to network: ${deploymentNetwork}`);
     
+    // Validate bytecode format strictly - don't auto-fix, show the real issue
+    if (!bytecode || !bytecode.startsWith('0x') || bytecode.length < 10) {
+      throw new Error('Invalid bytecode format. Must be hex string with 0x prefix and sufficient length');
+    }
+    
+    // Ensure bytecode contains only valid hex characters
+    const hexPart = bytecode.slice(2);
+    if (!/^[a-fA-F0-9]*$/.test(hexPart)) {
+      throw new Error('Bytecode contains invalid characters. Must be valid hexadecimal');
+    }
+    
+    // Check for odd length and report it clearly
+    if (hexPart.length % 2 !== 0) {
+      logger.error(`Received malformed bytecode with odd length: ${bytecode.length} total chars, ${hexPart.length} hex chars`);
+      logger.error(`Bytecode: ${bytecode.substring(0, 100)}...`);
+      throw new Error(`Bytecode has odd length (${hexPart.length} hex chars). This indicates the bytecode was corrupted during compilation or transmission.`);
+    }
+    
+    logger.info(`Deploying contract with validated bytecode length: ${bytecode.length} characters`);
+    
     // Deploy contract with enhanced progress tracking
     deploymentResult = await deployer.deploy({
-      bytecode,
+      bytecode, // Use original bytecode without modification
       abi,
       constructorParams,
       gasLimit,
@@ -274,10 +305,16 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
  *     tags: [Deployment]
  */
 router.post('/estimate-gas', async (req, res) => {
-  const { bytecode, abi, network = 'sepolia', constructorParams = [] } = req.body;
+  const { bytecode, abi, network = 'arbitrum_sepolia', constructorParams = [] } = req.body;
   
   try {
     logger.info(`Estimating gas for deployment on ${network}`);
+    
+    // Validate network
+    const validNetworks = ['mainnet', 'arbitrum_sepolia', 'sepolia', 'goerli', 'arbitrum'];
+    if (!validNetworks.includes(network)) {
+      throw new Error(`Invalid network: ${network}. Supported networks: ${validNetworks.join(', ')}`);
+    }
     
     const deployer = new ContractDeployer(network);
     const gasEstimate = await deployer.estimateGas({

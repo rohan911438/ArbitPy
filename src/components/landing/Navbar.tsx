@@ -7,13 +7,21 @@ interface NavbarProps {
 }
 
 export function Navbar({ onLaunchApp }: NavbarProps) {
-  const { connectedWallet, connect, disconnect, isConnecting } = useMetaMask();
+  const { 
+    connectedWallet, 
+    connect, 
+    disconnect, 
+    isConnecting,
+    isNetworkSupported,
+    network 
+  } = useMetaMask();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { label: 'Features', href: '#features' },
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'Examples', href: '#examples' },
+    { label: 'Wallet Demo', href: '/wallet-demo' },
     { label: 'Docs', href: '#docs' },
   ];
 
@@ -48,12 +56,18 @@ export function Navbar({ onLaunchApp }: NavbarProps) {
               <>
                 <button
                   onClick={disconnect}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-sm"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-sm hover:bg-secondary/80 transition-colors"
+                  title={`${network || 'Unknown network'} - Click to disconnect`}
                 >
-                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${
+                    isNetworkSupported() ? 'bg-green-500' : 'bg-yellow-500'
+                  }`} />
                   <span className="font-mono text-xs">
                     {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
                   </span>
+                  {!isNetworkSupported() && (
+                    <span className="text-xs text-yellow-600">!</span>
+                  )}
                 </button>
                 <button
                   onClick={onLaunchApp}

@@ -190,6 +190,35 @@ export async function deployContract(
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
+    // Validate bytecode before sending
+    if (!bytecode || !bytecode.startsWith('0x')) {
+      throw new Error('Invalid bytecode: must be a hex string starting with 0x');
+    }
+    
+    const bytecodePattern = /^0x[a-fA-F0-9]+$/;
+    if (!bytecodePattern.test(bytecode)) {
+      throw new Error('Invalid bytecode format: contains non-hex characters');
+    }
+    
+    // Validate private key before sending
+    if (!privateKey || !privateKey.startsWith('0x') || privateKey.length !== 66) {
+      throw new Error('Invalid private key: must be 66 characters (0x + 64 hex digits)');
+    }
+    
+    const privateKeyPattern = /^0x[a-fA-F0-9]{64}$/;
+    if (!privateKeyPattern.test(privateKey)) {
+      throw new Error('Invalid private key format: must contain only hex characters');
+    }
+    
+    // Debug logging
+    console.log('API deployContract called with:', {
+      bytecode: bytecode?.substring(0, 100) + '...', // Log first 100 chars
+      bytecodeType: typeof bytecode,
+      bytecodeStartsWithOx: bytecode?.startsWith('0x'),
+      abiLength: abi?.length,
+      network
+    });
+    
     const response = await fetch(`${apiUrl}/api/v1/deploy/contract`, {
       method: 'POST',
       headers: {
@@ -230,6 +259,100 @@ export async function deployContract(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown deployment error'
+    };
+  }
+}
+
+export async function deployContractWithSigner(
+  bytecode: string,
+  abi: any[],
+  signer: any,
+  network: string = 'arbitrum_sepolia',
+  constructorParams: any[] = []
+): Promise<DeployResponse> {
+  try {
+    // Validate bytecode before deployment
+    if (!bytecode || !bytecode.startsWith('0x')) {
+      throw new Error('Invalid bytecode: must be a hex string starting with 0x');
+    }
+    
+    const bytecodePattern = /^0x[a-fA-F0-9]+$/;
+    if (!bytecodePattern.test(bytecode)) {
+      throw new Error('Invalid bytecode format: contains non-hex characters');
+    }
+
+    if (!signer) {
+      throw new Error('Signer is required for MetaMask deployment');
+    }
+
+    // Import ethers here to avoid import issues
+    const { ContractFactory } = await import('ethers');
+    
+    // Create contract factory
+    const contractFactory = new ContractFactory(abi, bytecode, signer);
+    
+    // Debug logging
+    console.log('Deploying with MetaMask signer...', {
+      bytecode: bytecode?.substring(0, 100) + '...',
+      abiLength: abi?.length,
+      network,
+      signerAddress: await signer.getAddress()
+    });
+
+    // Deploy the contract
+    const contract = await contractFactory.deploy(...constructorParams, {
+      gasLimit: '3000000'
+    });
+
+    // Wait for deployment
+    const deploymentTx = await contract.waitForDeployment();
+    const txReceipt = await contract.deploymentTransaction()?.wait();
+    
+    const contractAddress = await contract.getAddress();
+    const txHash = contract.deploymentTransaction()?.hash;
+
+    // Calculate deployment cost
+    const gasUsed = txReceipt?.gasUsed?.toString() || '0';
+    const gasPrice = txReceipt?.gasPrice?.toString() || '0';
+    const costInWei = BigInt(gasUsed) * BigInt(gasPrice);
+    const costInEth = Number(costInWei) / 1e18;
+
+    // Generate explorer URLs for Arbitrum Sepolia
+    const explorerUrl = `https://sepolia.arbiscan.io/tx/${txHash}`;
+    const contractExplorerUrl = `https://sepolia.arbiscan.io/address/${contractAddress}`;
+
+    return {
+      success: true,
+      txHash: txHash,
+      contractAddress: contractAddress,
+      blockNumber: txReceipt?.blockNumber,
+      gasUsed: gasUsed,
+      deploymentCost: costInEth.toFixed(6),
+      network: network,
+      explorerUrl: explorerUrl,
+      contractExplorerUrl: contractExplorerUrl,
+      message: `Contract deployed successfully to ${contractAddress}`
+    };
+  } catch (error) {
+    console.error('MetaMask deployment error:', error);
+    
+    // Handle specific MetaMask errors
+    let errorMessage = 'Deployment failed';
+    if (error instanceof Error) {
+      if (error.message.includes('user rejected')) {
+        errorMessage = 'User rejected the transaction in MetaMask';
+      } else if (error.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas fees';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error - please check your connection and try again';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return {
+      success: false,
+      error: errorMessage
     };
   }
 }

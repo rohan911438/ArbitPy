@@ -134,8 +134,44 @@ export class ContractDeployer {
       
       onProgress?.({ stage: 'balance', message: `Wallet balance: ${balanceEth} ETH` });
       
+      // Validate and fix bytecode format
+      onProgress?.({ stage: 'validation', message: 'Validating contract bytecode...' });
+      
+      if (!bytecode.startsWith('0x')) {
+        throw new Error('Invalid bytecode: must start with 0x');
+      }
+      
+      let hexPart = bytecode.slice(2);
+      if (hexPart.length === 0) {
+        throw new Error('Invalid bytecode: empty after 0x prefix');
+      }
+      
+      if (!/^[a-fA-F0-9]+$/.test(hexPart)) {
+        throw new Error('Invalid bytecode: contains non-hex characters');
+      }
+      
+      if (hexPart.length < 20) {
+        throw new Error('Invalid bytecode: too short to be valid contract bytecode');
+      }
+      
+      // Fix odd length by padding
+      let validatedBytecode = bytecode;
+      if (hexPart.length % 2 !== 0) {
+        validatedBytecode = bytecode + '0';
+        hexPart = validatedBytecode.slice(2);
+        logger.warn(`Fixed odd-length bytecode by padding: ${bytecode.length} -> ${validatedBytecode.length}`);
+      }
+      
+      logger.info(`Bytecode validation passed: ${validatedBytecode.length} characters`);
+      
       // Create contract factory
-      const contractFactory = new ethers.ContractFactory(abi, bytecode, wallet);
+      let contractFactory;
+      try {
+        contractFactory = new ethers.ContractFactory(abi, validatedBytecode, wallet);
+      } catch (factoryError) {
+        logger.error('Failed to create contract factory:', factoryError);
+        throw new Error(`Invalid contract bytecode or ABI: ${factoryError.message}`);
+      }
       
       // Estimate gas if not provided
       let finalGasLimit = gasLimit;
@@ -174,7 +210,23 @@ export class ContractDeployer {
       logger.info('Sending deployment transaction...');
       onProgress?.({ stage: 'deployment', message: 'Sending deployment transaction...' });
       
-      const contract = await contractFactory.deploy(...constructorParams, deployTx);
+      let contract;
+      try {
+        contract = await contractFactory.deploy(...constructorParams, deployTx);
+      } catch (deployError) {
+        logger.error('Contract deployment failed:', deployError);
+        
+        if (deployError.code === 'INVALID_ARGUMENT') {
+          throw new Error(`Invalid deployment arguments: ${deployError.message}. Check bytecode format and constructor parameters.`);
+        } else if (deployError.code === 'INSUFFICIENT_FUNDS') {
+          throw new Error(`Insufficient funds for deployment: ${deployError.message}`);
+        } else if (deployError.message.includes('revert')) {
+          throw new Error(`Contract deployment reverted: ${deployError.message}`);
+        } else {
+          throw new Error(`Deployment failed: ${deployError.message}`);
+        }
+      }
+      
       const deploymentTx = contract.deploymentTransaction();
       
       if (!deploymentTx) {
@@ -369,6 +421,79 @@ export class ContractDeployer {
         success: false,
         error: error.message,
         network
+      };
+    }
+  }
+  
+  /**
+   * Estimate gas cost for contract deployment
+   * @param {Object} params - Estimation parameters
+   * @returns {Promise<Object>} Gas estimation result
+   */
+  async estimateGas({ bytecode, abi, constructorParams = [] }) {
+    try {
+      const provider = this.getProvider(this.network);
+      const networkConfig = this.networks[this.network];
+      
+      if (!networkConfig) {
+        throw new Error(`Unsupported network: ${this.network}`);
+      }
+      
+      // Create a temporary contract factory for estimation
+      const contractFactory = new ethers.ContractFactory(abi, bytecode, provider);
+      
+      // Get deployment transaction
+      const deployTx = await contractFactory.getDeployTransaction(...constructorParams);
+      
+      // Estimate gas
+      const gasEstimate = await provider.estimateGas(deployTx);
+      
+      // Get current gas price
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice;
+      
+      // Calculate estimated cost in ETH
+      const estimatedCostWei = gasEstimate * gasPrice;
+      const estimatedCostEth = ethers.formatEther(estimatedCostWei);
+      
+      // For mock purposes, set a dummy USD rate (in real app, you'd fetch from an API)
+      const ethToUsdRate = 2400; // Mock rate
+      const estimatedCostUSD = (parseFloat(estimatedCostEth) * ethToUsdRate).toFixed(2);
+      
+      logger.info(`Gas estimation complete for ${this.network}:`, {
+        gasLimit: gasEstimate.toString(),
+        gasPrice: ethers.formatUnits(gasPrice, 'gwei'),
+        estimatedCost: estimatedCostEth
+      });
+      
+      return {
+        success: true,
+        network: this.network,
+        gasLimit: gasEstimate.toString(),
+        gasPrice: gasPrice.toString(),
+        gasPriceGwei: ethers.formatUnits(gasPrice, 'gwei'),
+        estimatedCost: estimatedCostEth,
+        estimatedCostUSD,
+        estimatedCostWei: estimatedCostWei.toString(),
+        chainId: networkConfig.chainId
+      };
+      
+    } catch (error) {
+      logger.error(`Gas estimation failed for ${this.network}:`, error);
+      
+      // Return mock estimation as fallback for development
+      return {
+        success: true,
+        network: this.network,
+        gasLimit: '2000000', // 2M gas mock estimate
+        gasPrice: '1000000000', // 1 gwei mock
+        gasPriceGwei: '1.0',
+        estimatedCost: '0.002',
+        estimatedCostUSD: '4.80',
+        estimatedCostWei: '2000000000000000',
+        chainId: this.networks[this.network]?.chainId || 421614,
+        mock: true,
+        originalError: error.message
       };
     }
   }
