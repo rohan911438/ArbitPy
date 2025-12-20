@@ -6,6 +6,7 @@ import { cacheManager } from '../utils/cache.js';
 import { validateDeploymentRequest } from '../middleware/validation.js';
 import { ContractDeployer } from '../services/ContractDeployer.js';
 import { TransactionMonitor } from '../services/TransactionMonitor.js';
+import { DeploymentDiagnostics } from '../utils/deploymentDiagnostics.js';
 
 const router = express.Router();
 
@@ -94,8 +95,25 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
     }
     
     // Validate bytecode format
-    if (!bytecode || !bytecode.startsWith('0x') || bytecode.length < 4) {
-      throw new Error('Invalid bytecode format. Must be hex string with 0x prefix');
+    if (!bytecode || !bytecode.startsWith('0x') || bytecode.length < 10) {
+      throw new Error('Invalid bytecode format. Must be hex string with 0x prefix and contain actual contract bytecode');
+    }
+    
+    // Check if bytecode looks like actual contract bytecode (not source code)
+    if (bytecode.length < 100) {
+      throw new Error('Bytecode appears to be too short for a valid contract. Ensure you are using compiled bytecode, not source code.');
+    }
+    
+    // Validate hex format after 0x
+    const hexPart = bytecode.slice(2);
+    if (!/^[a-fA-F0-9]*$/.test(hexPart)) {
+      throw new Error('Bytecode contains invalid characters. Must be valid hexadecimal');
+    }
+    
+    if (hexPart.length % 2 !== 0) {
+      logger.error(`Received malformed bytecode with odd length: ${bytecode.length} total chars, ${hexPart.length} hex chars`);
+      logger.error(`Bytecode: ${bytecode.substring(0, 100)}...`);
+      throw new Error(`Bytecode has odd length (${hexPart.length} hex chars). This indicates the bytecode was corrupted during compilation or transmission.`);
     }
     
     // Initialize deployer with proper network mapping
@@ -109,24 +127,6 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
     const deployer = new ContractDeployer(deploymentNetwork);
     
     logger.info(`Deploying to network: ${deploymentNetwork}`);
-    
-    // Validate bytecode format strictly - don't auto-fix, show the real issue
-    if (!bytecode || !bytecode.startsWith('0x') || bytecode.length < 10) {
-      throw new Error('Invalid bytecode format. Must be hex string with 0x prefix and sufficient length');
-    }
-    
-    // Ensure bytecode contains only valid hex characters
-    const hexPart = bytecode.slice(2);
-    if (!/^[a-fA-F0-9]*$/.test(hexPart)) {
-      throw new Error('Bytecode contains invalid characters. Must be valid hexadecimal');
-    }
-    
-    // Check for odd length and report it clearly
-    if (hexPart.length % 2 !== 0) {
-      logger.error(`Received malformed bytecode with odd length: ${bytecode.length} total chars, ${hexPart.length} hex chars`);
-      logger.error(`Bytecode: ${bytecode.substring(0, 100)}...`);
-      throw new Error(`Bytecode has odd length (${hexPart.length} hex chars). This indicates the bytecode was corrupted during compilation or transmission.`);
-    }
     
     logger.info(`Deploying contract with validated bytecode length: ${bytecode.length} characters`);
     
@@ -257,12 +257,45 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
     logger.error(`Contract deployment failed for session ${sessionId}:`, error);
     logger.error(`Stack trace:`, error.stack);
     
+    // Generate diagnostics for failed deployment
+    let diagnostics = null;
+    let troubleshootingReport = null;
+    
+    try {
+      // Create deployer instance to get provider
+      const deployer = new ContractDeployer(deploymentNetwork);
+      const provider = deployer.getProvider(deploymentNetwork);
+      
+      // Get transaction hash if deployment got that far
+      const txHash = deploymentResult?.txHash || deploymentResult?.transactionHash;
+      
+      // Analyze the failure
+      diagnostics = await DeploymentDiagnostics.analyzeFailedDeployment({
+        provider,
+        txHash,
+        bytecode,
+        abi,
+        constructorParams,
+        gasLimit,
+        gasPrice
+      });
+      
+      troubleshootingReport = DeploymentDiagnostics.generateTroubleshootingReport(diagnostics, error);
+      
+      logger.info(`Generated troubleshooting report for session ${sessionId}`, troubleshootingReport);
+      
+    } catch (diagError) {
+      logger.warn(`Failed to generate diagnostics: ${diagError.message}`);
+    }
+    
     const io = req.app.get('socketio');
     if (io) {
       io.to(`deployment-${sessionId}`).emit('deployment-error', {
         sessionId,
         error: error.message,
         details: error.details || error.message,
+        diagnostics,
+        troubleshootingReport,
         timestamp: new Date().toISOString()
       });
     }
@@ -272,6 +305,8 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
       error: error.message,
       stack: error.stack,
       deploymentResult,
+      diagnostics,
+      troubleshootingReport,
       timestamp: new Date().toISOString()
     }, 86400);
     
@@ -283,6 +318,8 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
       statusCode = 402; // Payment Required
     } else if (error.message.includes('network') || error.message.includes('RPC')) {
       statusCode = 503; // Service Unavailable
+    } else if (error.message.includes('revert') || error.message.includes('reverted')) {
+      statusCode = 422; // Unprocessable Entity
     }
     
     res.status(statusCode).json({
@@ -291,7 +328,11 @@ router.post('/contract', validateDeploymentRequest, async (req, res) => {
       error: 'Deployment failed',
       message: error.message,
       details: error.details || 'Check logs for more information',
-      network: network,
+      network: deploymentNetwork,
+      troubleshooting: troubleshootingReport,
+      diagnostics: diagnostics?.issues || [],
+      suggestions: diagnostics?.suggestions || [],
+      txHash: deploymentResult?.txHash || deploymentResult?.transactionHash,
       timestamp: new Date().toISOString()
     });
   }

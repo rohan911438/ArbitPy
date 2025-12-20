@@ -271,10 +271,14 @@ export async function deployContractWithSigner(
   constructorParams: any[] = []
 ): Promise<DeployResponse> {
   try {
-    // Strict frontend validation before deployment
-    const validationErrors = validateDeploymentArtifact(bytecode, abi, constructorParams);
-    if (validationErrors.length > 0) {
-      throw new Error(`Validation failed: ${validationErrors[0]}`);
+    // Validate bytecode before deployment
+    if (!bytecode || !bytecode.startsWith('0x')) {
+      throw new Error('Invalid bytecode: must be a hex string starting with 0x');
+    }
+    
+    const bytecodePattern = /^0x[a-fA-F0-9]+$/;
+    if (!bytecodePattern.test(bytecode)) {
+      throw new Error('Invalid bytecode format: contains non-hex characters');
     }
 
     if (!signer) {
@@ -282,35 +286,26 @@ export async function deployContractWithSigner(
     }
 
     // Import ethers here to avoid import issues
-    const { ContractFactory, BrowserProvider } = await import('ethers');
+    const { ContractFactory } = await import('ethers');
     
-    // Ensure we're using the correct provider and signer
-    let finalSigner = signer;
-    if (typeof window !== 'undefined' && window.ethereum) {
-      const provider = new BrowserProvider(window.ethereum);
-      finalSigner = await provider.getSigner();
-    }
-    
-    // Create contract factory using ContractFactory.deploy() pattern
-    const contractFactory = new ContractFactory(abi, bytecode, finalSigner);
+    // Create contract factory
+    const contractFactory = new ContractFactory(abi, bytecode, signer);
     
     // Debug logging
-    const signerAddress = await finalSigner.getAddress();
     console.log('Deploying with MetaMask signer...', {
       bytecode: bytecode?.substring(0, 100) + '...',
       abiLength: abi?.length,
       network,
-      signerAddress,
-      constructorParams
+      signerAddress: await signer.getAddress()
     });
 
-    // Deploy the contract using ContractFactory.deploy() - NEVER use sendTransaction
+    // Deploy the contract
     const contract = await contractFactory.deploy(...constructorParams, {
       gasLimit: '3000000'
     });
 
-    // Wait for deployment to complete
-    await contract.waitForDeployment();
+    // Wait for deployment
+    const deploymentTx = await contract.waitForDeployment();
     const txReceipt = await contract.deploymentTransaction()?.wait();
     
     const contractAddress = await contract.getAddress();
@@ -360,62 +355,6 @@ export async function deployContractWithSigner(
       error: errorMessage
     };
   }
-}
-
-// Strict frontend validation function
-function validateDeploymentArtifact(bytecode: string, abi: any[], constructorParams: any[]): string[] {
-  const errors: string[] = [];
-
-  // ✅ Bytecode exists
-  if (!bytecode || typeof bytecode !== 'string') {
-    errors.push('Bytecode is missing or invalid');
-    return errors;
-  }
-
-  // ✅ Bytecode starts with 0x
-  if (!bytecode.startsWith('0x')) {
-    errors.push('Bytecode must start with 0x');
-    return errors;
-  }
-
-  // ✅ Bytecode length is even
-  const hexPart = bytecode.slice(2);
-  if (hexPart.length % 2 !== 0) {
-    errors.push(`Bytecode has odd length (${hexPart.length} hex digits). Must be even.`);
-    return errors;
-  }
-
-  // Reject deployment if bytecode length < 10
-  if (bytecode.length < 10) {
-    errors.push(`Bytecode too short (${bytecode.length} chars). Minimum 10 characters required.`);
-    return errors;
-  }
-
-  // ✅ ABI is valid JSON
-  if (!Array.isArray(abi)) {
-    errors.push('ABI must be a valid array');
-    return errors;
-  }
-
-  // Validate ABI structure
-  try {
-    JSON.stringify(abi);
-  } catch {
-    errors.push('ABI is not valid JSON');
-    return errors;
-  }
-
-  // ✅ Constructor args are provided if required
-  const constructor = abi.find(item => item.type === 'constructor');
-  const expectedArgsCount = constructor ? constructor.inputs.length : 0;
-  const providedArgsCount = constructorParams ? constructorParams.length : 0;
-
-  if (expectedArgsCount !== providedArgsCount) {
-    errors.push(`Constructor args mismatch: expected ${expectedArgsCount}, provided ${providedArgsCount}`);
-    return errors;
-  }
-
-  return errors;
 }
 
 export async function executeFunction(

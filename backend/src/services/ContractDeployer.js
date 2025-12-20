@@ -164,6 +164,24 @@ export class ContractDeployer {
       
       logger.info(`Bytecode validation passed: ${validatedBytecode.length} characters`);
       
+      // Validate constructor parameters against ABI
+      onProgress?.({ stage: 'validation', message: 'Validating constructor parameters...' });
+      
+      // Find constructor in ABI
+      const constructor = abi.find(item => item.type === 'constructor');
+      if (constructor && constructor.inputs) {
+        const expectedParams = constructor.inputs.length;
+        const providedParams = constructorParams.length;
+        
+        if (expectedParams !== providedParams) {
+          throw new Error(`Constructor expects ${expectedParams} parameters, but ${providedParams} were provided. Required: ${constructor.inputs.map(input => `${input.name} (${input.type})`).join(', ')}`);
+        }
+        
+        logger.info(`Constructor validation passed: ${expectedParams} parameters provided`);
+      } else if (constructorParams.length > 0) {
+        logger.warn('Constructor parameters provided but no constructor found in ABI');
+      }
+      
       // Create contract factory
       let contractFactory;
       try {
@@ -179,17 +197,42 @@ export class ContractDeployer {
         try {
           onProgress?.({ stage: 'gas_estimation', message: 'Estimating gas requirements...' });
           
-          const estimated = await contractFactory.getDeployTransaction(...constructorParams);
-          const gasEstimate = await wallet.provider.estimateGas(estimated);
-          finalGasLimit = gasEstimate + (gasEstimate * 20n / 100n); // Add 20% buffer
+          // Try to create deployment transaction first to validate
+          const deployTx = await contractFactory.getDeployTransaction(...constructorParams);
+          
+          // Estimate gas for the deployment transaction
+          const gasEstimate = await wallet.provider.estimateGas({
+            data: deployTx.data,
+            value: ethers.parseEther(value.toString())
+          });
+          
+          // Add 50% buffer for Arbitrum (can have higher gas usage)
+          finalGasLimit = gasEstimate + (gasEstimate * 50n / 100n);
+          
+          // Ensure minimum gas for Arbitrum
+          const minGas = BigInt(500000);
+          if (finalGasLimit < minGas) {
+            finalGasLimit = minGas;
+          }
           
           logger.info(`Estimated gas: ${gasEstimate}, using: ${finalGasLimit}`);
-          onProgress?.({ stage: 'gas_estimation', message: `Gas estimated: ${gasEstimate}` });
+          onProgress?.({ stage: 'gas_estimation', message: `Gas estimated: ${gasEstimate}, using: ${finalGasLimit}` });
         } catch (estimateError) {
-          logger.warn('Gas estimation failed, using default:', estimateError.message);
-          finalGasLimit = 3000000; // Default fallback
-          onProgress?.({ stage: 'gas_estimation', message: 'Using default gas limit: 3,000,000' });
+          logger.warn('Gas estimation failed, analyzing error:', estimateError.message);
+          
+          // Check if it's a revert reason
+          if (estimateError.message.includes('revert') || estimateError.reason) {
+            const revertReason = estimateError.reason || 'Contract constructor reverted';
+            throw new Error(`Contract deployment would revert: ${revertReason}. Check constructor parameters and contract logic.`);
+          }
+          
+          // Use higher default for Arbitrum
+          finalGasLimit = BigInt(1500000);
+          onProgress?.({ stage: 'gas_estimation', message: 'Gas estimation failed, using fallback: 1,500,000' });
         }
+      } else {
+        // Convert string to BigInt if needed
+        finalGasLimit = typeof finalGasLimit === 'string' ? BigInt(finalGasLimit) : BigInt(finalGasLimit);
       }
       
       // Get gas price if not provided
@@ -207,21 +250,37 @@ export class ContractDeployer {
         value: ethers.parseEther(value.toString())
       };
       
-      logger.info('Sending deployment transaction...');
-      onProgress?.({ stage: 'deployment', message: 'Sending deployment transaction...' });
+      logger.info(`Sending deployment transaction with gas: ${finalGasLimit}`);
+      onProgress?.({ stage: 'deployment', message: `Sending deployment transaction with gas: ${finalGasLimit}...` });
       
       let contract;
       try {
+        // Pre-validate the deployment transaction
+        const deploymentData = await contractFactory.getDeployTransaction(...constructorParams);
+        
+        // Check if constructor parameters are correctly formatted
+        if (constructorParams.length > 0) {
+          logger.info(`Constructor params: ${JSON.stringify(constructorParams)}`);
+        }
+        
         contract = await contractFactory.deploy(...constructorParams, deployTx);
       } catch (deployError) {
-        logger.error('Contract deployment failed:', deployError);
+        logger.error('Contract deployment failed:', {
+          error: deployError.message,
+          code: deployError.code,
+          data: deployError.data,
+          reason: deployError.reason
+        });
         
         if (deployError.code === 'INVALID_ARGUMENT') {
           throw new Error(`Invalid deployment arguments: ${deployError.message}. Check bytecode format and constructor parameters.`);
         } else if (deployError.code === 'INSUFFICIENT_FUNDS') {
           throw new Error(`Insufficient funds for deployment: ${deployError.message}`);
-        } else if (deployError.message.includes('revert')) {
-          throw new Error(`Contract deployment reverted: ${deployError.message}`);
+        } else if (deployError.message.includes('revert') || deployError.reason) {
+          const revertReason = deployError.reason || deployError.data || 'Unknown revert reason';
+          throw new Error(`Contract deployment reverted: ${revertReason}. Check contract constructor logic and parameters.`);
+        } else if (deployError.message.includes('gas')) {
+          throw new Error(`Gas estimation or execution failed: ${deployError.message}. Try increasing gas limit.`);
         } else {
           throw new Error(`Deployment failed: ${deployError.message}`);
         }
@@ -243,15 +302,45 @@ export class ContractDeployer {
       // Wait for deployment confirmation
       onProgress?.({ stage: 'confirmation', message: 'Waiting for transaction confirmation...' });
       
-      const deploymentReceipt = await contract.waitForDeployment();
-      const receipt = await deploymentTx.wait();
+      let deploymentReceipt;
+      let receipt;
       
-      if (!receipt) {
-        throw new Error('Transaction receipt not available');
-      }
-      
-      if (receipt.status !== 1) {
-        throw new Error(`Transaction failed with status: ${receipt.status}`);
+      try {
+        // Wait for deployment with timeout
+        const deploymentPromise = contract.waitForDeployment();
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Deployment confirmation timeout')), 300000); // 5 minutes
+        });
+        
+        deploymentReceipt = await Promise.race([deploymentPromise, timeoutPromise]);
+        receipt = await deploymentTx.wait();
+        
+        if (!receipt) {
+          throw new Error('Transaction receipt not available');
+        }
+        
+        logger.info(`Transaction confirmed in block ${receipt.blockNumber}`);
+        onProgress?.({ stage: 'confirmation', message: `Transaction confirmed in block ${receipt.blockNumber}` });
+        
+        // Check transaction status
+        if (receipt.status !== 1) {
+          throw new Error(`Transaction failed with status: ${receipt.status}. The contract deployment was reverted.`);
+        }
+        
+        // Verify contract was actually deployed
+        const contractCode = await wallet.provider.getCode(receipt.contractAddress);
+        if (contractCode === '0x') {
+          throw new Error('Contract deployment succeeded but no code found at contract address. The contract may have self-destructed.');
+        }
+        
+      } catch (confirmationError) {
+        logger.error('Deployment confirmation failed:', confirmationError);
+        
+        if (confirmationError.message.includes('timeout')) {
+          throw new Error('Deployment confirmation timed out. The transaction may still be pending. Check the transaction hash on the block explorer.');
+        }
+        
+        throw new Error(`Deployment confirmation failed: ${confirmationError.message}`);
       }
       
       const deploymentTime = Date.now() - startTime;

@@ -155,129 +155,6 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({
     setPrivateKey(sanitized);
   };
 
-  // Frontend validation functions (MUST pass before enabling Deploy button)
-  const validateBytecode = (bytecode: any): { isValid: boolean; message?: string } => {
-    // ✅ Bytecode exists
-    if (!bytecode) {
-      return { isValid: false, message: 'Bytecode is missing' };
-    }
-
-    // Handle object bytecode
-    let bytecodeStr = typeof bytecode === 'object' ? bytecode?.object : bytecode;
-    if (!bytecodeStr || typeof bytecodeStr !== 'string') {
-      return { isValid: false, message: 'Bytecode must be a hex string' };
-    }
-
-    // ✅ Bytecode starts with 0x
-    if (!bytecodeStr.startsWith('0x')) {
-      return { isValid: false, message: 'Bytecode must start with 0x' };
-    }
-
-    // ✅ Bytecode length > 10
-    if (bytecodeStr.length < 10) {
-      return { isValid: false, message: `Bytecode too short (${bytecodeStr.length} chars)` };
-    }
-
-    // ✅ Bytecode length is even
-    const hexPart = bytecodeStr.slice(2);
-    if (hexPart.length % 2 !== 0) {
-      return { isValid: false, message: `Bytecode has odd length (${hexPart.length} hex digits)` };
-    }
-
-    return { isValid: true };
-  };
-
-  const validateABI = (abi: any): { isValid: boolean; message?: string } => {
-    // ✅ ABI is valid JSON
-    if (!Array.isArray(abi)) {
-      return { isValid: false, message: 'ABI must be an array' };
-    }
-
-    try {
-      JSON.stringify(abi);
-    } catch {
-      return { isValid: false, message: 'ABI is not valid JSON' };
-    }
-
-    return { isValid: true };
-  };
-
-  const validateConstructorArgs = (abi: any[]): { isValid: boolean; message?: string; expectedCount: number } => {
-    const constructor = abi.find(item => item.type === 'constructor');
-    const expectedCount = constructor ? constructor.inputs.length : 0;
-    const providedCount = 0; // We're not handling constructor args yet
-
-    if (expectedCount !== providedCount) {
-      return { 
-        isValid: false, 
-        message: `Constructor requires ${expectedCount} arguments, but ${providedCount} provided`,
-        expectedCount 
-      };
-    }
-
-    return { isValid: true, expectedCount };
-  };
-
-  const validateWalletForDeployment = (): { isValid: boolean; message?: string } => {
-    if (!isWalletReady) {
-      return { isValid: false, message: 'Wallet not connected' };
-    }
-
-    // ✅ Wallet is connected to Arbitrum Sepolia
-    if (!isCorrectNetwork) {
-      return { isValid: false, message: 'Switch to Arbitrum Sepolia network' };
-    }
-
-    // ✅ Wallet has ≥ 0.002 ETH
-    const balanceNum = parseFloat(wallet.balance || '0');
-    if (balanceNum < 0.002) {
-      return { isValid: false, message: `Need ≥ 0.002 ETH (current: ${balanceNum.toFixed(4)} ETH)` };
-    }
-
-    return { isValid: true };
-  };
-
-  // Check if deploy button should be enabled
-  const isDeployButtonEnabled = (): boolean => {
-    if (!compilationResult) return false;
-
-    const bytecodeValid = validateBytecode(compilationResult.bytecode).isValid;
-    const abiValid = validateABI(compilationResult.abi).isValid;
-    const constructorValid = validateConstructorArgs(compilationResult.abi || []).isValid;
-
-    if (usePrivateKey) {
-      const privateKeyValid = validatePrivateKey(privateKey).isValid;
-      return bytecodeValid && abiValid && constructorValid && privateKeyValid;
-    } else {
-      const walletValid = validateWalletForDeployment().isValid;
-      return bytecodeValid && abiValid && constructorValid && walletValid;
-    }
-  };
-
-  // Get validation error message for UI
-  const getValidationMessage = (): string | null => {
-    if (!compilationResult) return 'Compile your contract first';
-
-    const bytecodeValidation = validateBytecode(compilationResult.bytecode);
-    if (!bytecodeValidation.isValid) return bytecodeValidation.message || 'Invalid bytecode';
-
-    const abiValidation = validateABI(compilationResult.abi);
-    if (!abiValidation.isValid) return abiValidation.message || 'Invalid ABI';
-
-    const constructorValidation = validateConstructorArgs(compilationResult.abi || []);
-    if (!constructorValidation.isValid) return constructorValidation.message || 'Constructor args mismatch';
-
-    if (usePrivateKey) {
-      const privateKeyValidation = validatePrivateKey(privateKey);
-      if (!privateKeyValidation.isValid) return privateKeyValidation.message || 'Invalid private key';
-    } else {
-      const walletValidation = validateWalletForDeployment();
-      if (!walletValidation.isValid) return walletValidation.message || 'Wallet issue';
-    }
-
-    return null;
-  };
-
   const estimateGas = async () => {
     if (!compilationResult) return;
     
@@ -321,17 +198,6 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({
     console.log('Compilation result bytecode type:', typeof compilationResult?.bytecode);
     console.log('Bytecode starts with 0x:', compilationResult?.bytecode?.startsWith?.('0x'));
     console.log('=== END FRONTEND DEBUG ===');
-    
-    // STRICT PRE-DEPLOYMENT VALIDATION (as per implementation guide)
-    if (!isDeployButtonEnabled()) {
-      const errorMessage = getValidationMessage();
-      toast({
-        title: 'Validation Failed',
-        description: errorMessage || 'Deployment validation failed',
-        variant: 'destructive',
-      });
-      return;
-    }
     
     if (!compilationResult) {
       toast({
@@ -736,20 +602,13 @@ const DeploymentPanel: React.FC<DeploymentPanelProps> = ({
               </Button>
             </div>
 
-            {/* Validation Status */}
-            {!isDeployButtonEnabled() && (
-              <Alert className="border-orange-200 bg-orange-50">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-orange-800">
-                  {getValidationMessage()}
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Deploy Button */}
             <Button
               onClick={handleDeploy}
-              disabled={!isDeployButtonEnabled()}
+              disabled={
+                !compilationResult || 
+                (usePrivateKey ? !privateKey : !isWalletReady || !isCorrectNetwork)
+              }
               className="w-full"
             >
               Deploy Contract {!usePrivateKey ? 'with MetaMask' : 'with Private Key'}
