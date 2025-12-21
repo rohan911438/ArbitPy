@@ -14,7 +14,7 @@
 ### 🚀 **Live Deployments**
 - **🌐 Live Demo**: [https://arbitpy-ebon.vercel.app/](https://arbitpy-ebon.vercel.app/)
 - **📊 Project Presentation**: [View Interactive Presentation](https://claude.ai/public/artifacts/b6861779-0955-4557-a61f-c7d78dd61df6)
-- **🎥 Demo Video**: [Watch Demo Video](#) *(Coming Soon)*
+- **🎥 Demo Video**: [Watch Demo Video](https://youtu.be/FVWdfZuF8ps?si=d_2pfwkMBGAvLFDI)
 
 ### 📦 **NPM Packages**
 - **📚 ArbitPy SDK**: [arbitpy-sdk on NPM](https://www.npmjs.com/package/arbitpy-sdk) - Official TypeScript SDK
