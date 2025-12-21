@@ -9,6 +9,36 @@
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Now-brightgreen.svg)](https://arbitpy-ebon.vercel.app/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## 🔗 Quick Access Links
+
+### 🚀 **Live Deployments**
+- **🌐 Live Demo**: [https://arbitpy-ebon.vercel.app/](https://arbitpy-ebon.vercel.app/)
+- **📊 Project Presentation**: [View Interactive Presentation](https://claude.ai/public/artifacts/b6861779-0955-4557-a61f-c7d78dd61df6)
+- **🎥 Demo Video**: [Watch Demo Video](#) *(Coming Soon)*
+
+### 📦 **NPM Packages**
+- **📚 ArbitPy SDK**: [arbitpy-sdk on NPM](https://www.npmjs.com/package/arbitpy-sdk) - Official TypeScript SDK
+- **⚙️ SDK Documentation**: [GitHub SDK Docs](https://github.com/rohan911438/arbitpy-playground/tree/main/packages/arbitpy-sdk)
+
+### 🔗 **Smart Contracts**
+- **📋 Main Contract**: [`0xd4fcba9301d11df04f5ba3361d5962b15d761705`](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
+- **🔍 Arbiscan Explorer**: [View on Arbiscan](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
+- **📝 Contract Source**: [Verified Contract Code](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705#code)
+- **⛽ Network**: Arbitrum Sepolia Testnet (Chain ID: 421614)
+
+### 🛠️ **Developer Resources**
+- **📂 GitHub Repository**: [arbitpy-playground](https://github.com/rohan911438/arbitpy-playground)
+- **🐛 Report Issues**: [GitHub Issues](https://github.com/rohan911438/arbitpy-playground/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/rohan911438/arbitpy-playground/discussions)
+- **📚 Documentation**: Complete guides and tutorials below
+
+### 👨‍💻 **Team BROTHERHOOD**
+- **Lead Developer**: Rohan Kumar ([@rohan911438](https://github.com/rohan911438))
+- **Project Lead**: Team BROTHERHOOD
+- **Contact**: Open an issue for support
+
+---
+
 ## 🎯 Overview
 
 ArbitPy is a revolutionary Python-to-blockchain compiler that brings the simplicity of Python to smart contract development. Write smart contracts in familiar Python syntax, compile to Solidity or Stylus/Rust, and deploy to Arbitrum with **40% lower gas costs**, **10x faster development**, and **zero learning curve** for Python developers.
