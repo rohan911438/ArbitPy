@@ -6,6 +6,7 @@
 [![Arbitrum](https://img.shields.io/badge/Built_for-Arbitrum_Stylus-blue.svg)](https://arbitrum.io/)
 [![Python](https://img.shields.io/badge/Python-Smart_Contracts-green.svg)](https://python.org/)
 [![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit_Now-brightgreen.svg)](https://arbitpy-ebon.vercel.app/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🎯 Overview
@@ -18,6 +19,13 @@ ArbitPy is a revolutionary Python-to-blockchain compiler that brings the simplic
 - 💰 **Lower Gas Costs**: Stylus compilation provides 40% gas savings
 - 🚀 **10x Faster**: No need to learn new languages - use Python skills directly
 - 🛡️ **AI-Powered**: Built-in AI assistant for code review and optimization
+
+## 🌐 Live Demo
+
+**🚀 [Try ArbitPy Playground](https://arbitpy-ebon.vercel.app/)**  
+**📊 [View Presentation](https://claude.ai/public/artifacts/b6861779-0955-4557-a61f-c7d78dd61df6)**
+
+Experience the full power of Python smart contract development in your browser!
 
 ## 🏆 Team BROTHERHOOD
 
@@ -603,6 +611,9 @@ We welcome contributions from the community! Here's how to get started:
 ## 🚀 Deployment
 
 ### **🌐 Deploy to Vercel (Recommended)**
+
+**Live Demo**: [https://arbitpy-ebon.vercel.app/](https://arbitpy-ebon.vercel.app/)  
+**Presentation**: [View Project Presentation](https://claude.ai/public/artifacts/b6861779-0955-4557-a61f-c7d78dd61df6)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/rohan911438/arbitpy-playground&env=VITE_CONTRACT_ADDRESS,VITE_ARBITRUM_SEPOLIA_RPC,VITE_NETWORK_ID,GEMINI_API_KEY&project-name=arbitpy-playground&repository-name=arbitpy-playground)
 
