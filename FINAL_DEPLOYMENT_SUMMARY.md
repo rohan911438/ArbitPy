@@ -13,9 +13,9 @@
 
 ### 2. **Contract Address Corrected** ✅  
 - **Old Address**: `0xD4fcbA9301d11DF04F5bA3361D5962b15D761705` ❌
-- **New Address**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56` ✅
+- **New Address**: `0xd4fcba9301d11df04f5ba3361d5962b15d761705` ✅
 - **Network**: Arbitrum Sepolia Testnet
-- **Explorer**: [View on Arbiscan](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
+- **Explorer**: [View Contract](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
 
 ### 3. **Vercel Deployment Ready** 🚀
 - ✅ Complete Vercel configuration (`vercel.json`)
@@ -100,7 +100,7 @@
 
 ### **🔧 Environment Variables for Vercel**
 ```env
-VITE_CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
+VITE_CONTRACT_ADDRESS=0xd4fcba9301d11df04f5ba3361d5962b15d761705
 VITE_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 VITE_NETWORK_ID=421614
 GEMINI_API_KEY=AIzaSyBInWubdwFk4QPpXCsvlH2NfhMDNBsmVo8
@@ -114,12 +114,13 @@ VITE_APP_NAME=ArbitPy Playground
 ## 📊 **Contract Information**
 
 ### **Deployed Contract Details**
-- **Address**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
+- **Address**: `0xd4fcba9301d11df04f5ba3361d5962b15d761705`
 - **Network**: Arbitrum Sepolia Testnet  
 - **Chain ID**: 421614
 - **Contract Name**: ArbitPyMaster
+- **Deployed By**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56` (Deployer Wallet)
 - **Creation TX**: [View Transaction](https://sepolia.arbiscan.io/tx/0x571b2c6cb809b749162870899fc4adf4b13bcbc3c8a991529ec5a80e241be4c6)
-- **Explorer**: [View Contract](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
+- **Explorer**: [View Contract](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
 
 ### **Connection Settings**
 - **RPC URL**: `https://sepolia-rollup.arbitrum.io/rpc`  

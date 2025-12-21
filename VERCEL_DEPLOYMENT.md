@@ -16,7 +16,7 @@ Copy the values from `env.vercel` to your Vercel dashboard:
 
 #### Frontend Variables
 ```
-VITE_CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
+VITE_CONTRACT_ADDRESS=0xd4fcba9301d11df04f5ba3361d5962b15d761705
 VITE_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 VITE_NETWORK_ID=421614
 VITE_APP_NAME=ArbitPy Playground
@@ -68,8 +68,8 @@ The project includes:
 ### 📊 Contract Information
 
 **Deployed Contract on Arbitrum Sepolia:**
-- **Address**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
-- **Explorer**: [View on Arbiscan](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
+- **Address**: `0xd4fcba9301d11df04f5ba3361d5962b15d761705`
+- **Explorer**: [View on Arbiscan](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
 - **Network**: Arbitrum Sepolia Testnet
 - **Chain ID**: 421614
 

@@ -5,7 +5,7 @@
 [![NPM Package](https://img.shields.io/badge/arbitpy--sdk-v1.0.0-blue.svg)](https://www.npmjs.com/package/arbitpy-sdk)
 [![Arbitrum](https://img.shields.io/badge/Built_for-Arbitrum_Stylus-blue.svg)](https://arbitrum.io/)
 [![Python](https://img.shields.io/badge/Python-Smart_Contracts-green.svg)](https://python.org/)
-[![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
+[![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🎯 Overview
@@ -122,15 +122,15 @@ class MyToken:
 ## 📄 Example Contract Deployment
 
 ### **Sample Contract Deployed**
-- **Contract Address**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
+- **Contract Address**: `0xd4fcba9301d11df04f5ba3361d5962b15d761705`
 - **Network**: Arbitrum Sepolia Testnet
 - **Original Language**: Python-like syntax
 - **Compiled To**: Solidity ^0.8.19
 - **Verification**: ✅ Verified on Arbiscan
 
 ### **Contract Links**
-- 🔍 **Arbiscan**: [View Contract](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
-- 📊 **Contract Scanner**: [Verify & Interact](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56#code)
+- 🔍 **Arbiscan**: [View Contract](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705)
+- 📊 **Contract Scanner**: [Verify & Interact](https://sepolia.arbiscan.io/address/0xd4fcba9301d11df04f5ba3361d5962b15d761705#code)
 - 📝 **Source Code**: [GitHub Repository](https://github.com/rohan911438/arbitpy-playground)
 
 ### **Developer Wallet for Verification**
@@ -288,7 +288,7 @@ VITE_API_URL=http://localhost:5000
 **Backend (.env)**
 ```env
 PORT=5000
-CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
+CONTRACT_ADDRESS=0xd4fcba9301d11df04f5ba3361d5962b15d761705
 ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 NETWORK_ID=421614
 ```
@@ -611,7 +611,7 @@ We welcome contributions from the community! Here's how to get started:
 1. **One-Click Deploy**: Use the button above
 2. **Set Environment Variables**: Configure the following in Vercel dashboard:
    ```
-   VITE_CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
+   VITE_CONTRACT_ADDRESS=0xd4fcba9301d11df04f5ba3361d5962b15d761705
    VITE_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
    VITE_NETWORK_ID=421614
    GEMINI_API_KEY=AIzaSyBInWubdwFk4QPpXCsvlH2NfhMDNBsmVo8
@@ -641,7 +641,7 @@ vercel --prod
 
 - ✅ Environment variables configured
 - ✅ Gemini API key working
-- ✅ Contract address updated to: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
+- ✅ Contract address updated to: `0xd4fcba9301d11df04f5ba3361d5962b15d761705`
 - ✅ Frontend builds successfully
 - ✅ API routes working
 - ✅ AI assistant responding with fallback answers

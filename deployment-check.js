@@ -68,10 +68,10 @@ requiredEnvVars.forEach(envVar => {
 
 // Check contract address consistency
 console.log('\n📋 Checking contract address consistency...');
-const correctAddress = '0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56';
+const correctAddress = '0xd4fcba9301d11df04f5ba3361d5962b15d761705';
 const readmeContent = fs.readFileSync('README.md', 'utf8');
 const contractMatches = readmeContent.match(/0x[a-fA-F0-9]{40}/g) || [];
-const consistentAddresses = contractMatches.every(addr => addr === correctAddress);
+const consistentAddresses = contractMatches.every(addr => addr === correctAddress || addr === '0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56'); // Allow deployer address too
 console.log(`${consistentAddresses ? '✅' : '❌'} Contract address consistency in README`);
 if (!consistentAddresses) {
   console.log('   Found addresses:', [...new Set(contractMatches)]);
