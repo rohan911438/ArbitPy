@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "name": "arbitpy-playground",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "VITE_CONTRACT_ADDRESS": "0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56",
+      "VITE_ARBITRUM_SEPOLIA_RPC": "https://sepolia-rollup.arbitrum.io/rpc",
+      "VITE_NETWORK_ID": "421614",
+      "VITE_APP_NAME": "ArbitPy Playground"
+    }
+  },
+  "functions": {
+    "backend/src/server.js": {
+      "runtime": "@vercel/node"
+    }
+  }
+}

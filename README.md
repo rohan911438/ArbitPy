@@ -5,7 +5,7 @@
 [![NPM Package](https://img.shields.io/badge/arbitpy--sdk-v1.0.0-blue.svg)](https://www.npmjs.com/package/arbitpy-sdk)
 [![Arbitrum](https://img.shields.io/badge/Built_for-Arbitrum_Stylus-blue.svg)](https://arbitrum.io/)
 [![Python](https://img.shields.io/badge/Python-Smart_Contracts-green.svg)](https://python.org/)
-[![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0xD4fcbA9301d11DF04F5bA3361D5962b15D761705)
+[![Contract](https://img.shields.io/badge/Contract-Deployed-success.svg)](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🎯 Overview
@@ -122,15 +122,15 @@ class MyToken:
 ## 📄 Example Contract Deployment
 
 ### **Sample Contract Deployed**
-- **Contract Address**: `0xD4fcbA9301d11DF04F5bA3361D5962b15D761705`
+- **Contract Address**: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
 - **Network**: Arbitrum Sepolia Testnet
 - **Original Language**: Python-like syntax
 - **Compiled To**: Solidity ^0.8.19
 - **Verification**: ✅ Verified on Arbiscan
 
 ### **Contract Links**
-- 🔍 **Arbiscan**: [View Contract](https://sepolia.arbiscan.io/address/0xD4fcbA9301d11DF04F5bA3361D5962b15D761705)
-- 📊 **Contract Scanner**: [Verify & Interact](https://sepolia.arbiscan.io/address/0xD4fcbA9301d11DF04F5bA3361D5962b15D761705#code)
+- 🔍 **Arbiscan**: [View Contract](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56)
+- 📊 **Contract Scanner**: [Verify & Interact](https://sepolia.arbiscan.io/address/0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56#code)
 - 📝 **Source Code**: [GitHub Repository](https://github.com/rohan911438/arbitpy-playground)
 
 ### **Developer Wallet for Verification**
@@ -279,7 +279,7 @@ npm start
 
 **Frontend (.env)**
 ```env
-VITE_CONTRACT_ADDRESS=0xD4fcbA9301d11DF04F5bA3361D5962b15D761705
+VITE_CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
 VITE_NETWORK_ID=421614
 VITE_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 VITE_API_URL=http://localhost:5000
@@ -288,7 +288,7 @@ VITE_API_URL=http://localhost:5000
 **Backend (.env)**
 ```env
 PORT=5000
-CONTRACT_ADDRESS=0xD4fcbA9301d11DF04F5bA3361D5962b15D761705
+CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
 ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
 NETWORK_ID=421614
 ```
@@ -597,6 +597,100 @@ We welcome contributions from the community! Here's how to get started:
 - 📋 [Open an Issue](https://github.com/rohan911438/arbitpy-playground/issues)
 - 💬 [Discussions](https://github.com/rohan911438/arbitpy-playground/discussions)
 - 📧 Contact: [Your Email Here]
+
+---
+
+## 🚀 Deployment
+
+### **🌐 Deploy to Vercel (Recommended)**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/rohan911438/arbitpy-playground&env=VITE_CONTRACT_ADDRESS,VITE_ARBITRUM_SEPOLIA_RPC,VITE_NETWORK_ID,GEMINI_API_KEY&project-name=arbitpy-playground&repository-name=arbitpy-playground)
+
+#### **Quick Deployment Steps:**
+
+1. **One-Click Deploy**: Use the button above
+2. **Set Environment Variables**: Configure the following in Vercel dashboard:
+   ```
+   VITE_CONTRACT_ADDRESS=0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56
+   VITE_ARBITRUM_SEPOLIA_RPC=https://sepolia-rollup.arbitrum.io/rpc
+   VITE_NETWORK_ID=421614
+   GEMINI_API_KEY=AIzaSyBInWubdwFk4QPpXCsvlH2NfhMDNBsmVo8
+   ```
+3. **Deploy**: Click deploy and wait for build completion
+4. **Test**: Verify all features work correctly
+
+#### **Manual Vercel Deployment:**
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy from project root
+vercel
+
+# Configure environment variables
+vercel env add VITE_CONTRACT_ADDRESS
+vercel env add GEMINI_API_KEY
+# ... add other variables
+
+# Redeploy with environment variables
+vercel --prod
+```
+
+#### **📋 Deployment Checklist:**
+
+- ✅ Environment variables configured
+- ✅ Gemini API key working
+- ✅ Contract address updated to: `0x8b550Ff0BA4F55f070cafA161E44e84AbeDbBc56`
+- ✅ Frontend builds successfully
+- ✅ API routes working
+- ✅ AI assistant responding with fallback answers
+- ✅ Python compilation working
+- ✅ MetaMask connection functional
+
+### **📁 Deployment Files**
+
+- **`vercel.json`**: Vercel configuration
+- **`env.vercel`**: Environment variables template
+- **`VERCEL_DEPLOYMENT.md`**: Detailed deployment guide
+- **`api/`**: Serverless functions for Vercel
+
+### **🔧 Post-Deployment Configuration**
+
+1. **Update API URL**: Set `VITE_API_URL` to your Vercel domain
+2. **Test AI Features**: Ensure Gemini API key works
+3. **Verify Contract**: Confirm contract address is accessible
+4. **Check Responsive Design**: Test on mobile devices
+5. **Monitor Performance**: Use Vercel Analytics
+
+### **🌍 Alternative Deployment Options**
+
+#### **Netlify**
+```bash
+# Build for production
+npm run build
+
+# Deploy to Netlify (drag & drop dist/ folder)
+# Or use Netlify CLI: netlify deploy --prod
+```
+
+#### **Railway**
+```bash
+# Deploy to Railway
+railway deploy
+
+# Configure environment variables in Railway dashboard
+```
+
+#### **AWS Amplify**
+```bash
+# Connect GitHub repository
+# Configure build settings:
+# Build command: npm run build
+# Output directory: dist
+```
+
+---
 
 ### **Community**
 - Join our Discord server (if available)
