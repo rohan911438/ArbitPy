@@ -8,8 +8,148 @@ import { validateAIRequest } from '../middleware/validation.js';
 const router = express.Router();
 
 // Gemini API configuration
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyBEjSJaPV3Hqc21B7sWmKtO9rlkSJSbDoE';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyBInWubdwFk4QPpXCsvlH2NfhMDNBsmVo8';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+// Fallback answers for common ArbitPy questions
+const fallbackAnswers = {
+  // ArbitPy basics
+  'what is arbitpy': `# 🚀 What is ArbitPy?
+
+**ArbitPy** is a revolutionary development platform that bridges Python developers to the Vyper smart contract ecosystem on Arbitrum Layer 2.
+
+## 🔧 **Core Features**
+✅ **Python-to-Vyper Translation**: Write Python-like code, deploy as Vyper contracts
+✅ **AI-Powered Development**: Built-in AI assistant for smart contract development
+✅ **Gas Optimization**: Optimized for Arbitrum's low-cost transactions
+✅ **Security First**: Built-in security analysis and best practices
+✅ **DeFi Ready**: Templates for DEX, lending, staking protocols
+
+## 🎯 **Perfect For:**
+- Python developers entering Web3
+- Building DeFi protocols on Arbitrum
+- Rapid smart contract prototyping
+- Learning Vyper development
+
+## 🛠️ **Get Started:**
+1. Write your contract logic in Python-style syntax
+2. Use our AI assistant for optimization
+3. Compile to Vyper automatically
+4. Deploy to Arbitrum with one click`,
+
+  'how to get started': `# 🚀 Getting Started with ArbitPy
+
+## **Step 1: Write Your First Contract**
+\`\`\`vyper
+# @version ^0.3.7
+# Simple Token Contract
+
+from vyper.interfaces import ERC20
+
+balanceOf: public(HashMap[address, uint256])
+totalSupply: public(uint256)
+owner: public(address)
+
+@external
+def __init__():
+    self.owner = msg.sender
+    self.totalSupply = 1000000 * 10**18
+    self.balanceOf[msg.sender] = self.totalSupply
+\`\`\`
+
+## **Step 2: Use AI Assistant**
+- Ask questions like "How do I add transfer function?"
+- Request security reviews
+- Get gas optimization suggestions
+
+## **Step 3: Deploy**
+1. Click "Compile" to generate bytecode
+2. Connect your MetaMask wallet
+3. Select Arbitrum Sepolia for testing
+4. Click "Deploy" and confirm transaction
+
+## **🎯 Pro Tips:**
+⚡ Start with our templates in the Examples section
+🛡️ Always run security analysis before mainnet deployment
+💰 Use testnet first (Arbitrum Sepolia)
+📚 Check our documentation for advanced features`,
+
+  'help': `# 🤖 ArbitPy AI Assistant
+
+I'm here to help you with **Vyper smart contract development** on **Arbitrum**! 
+
+## 🔥 **Popular Topics I Can Help With:**
+
+🚀 **Getting Started**
+- ArbitPy platform overview
+- First smart contract tutorial
+- Development environment setup
+
+⚡ **Smart Contract Development**
+- Vyper syntax and best practices
+- Gas optimization techniques
+- Security audit guidelines
+- Testing strategies
+
+🏦 **DeFi Protocols**
+- Token contracts (ERC-20)
+- Staking and yield farming
+- AMM and liquidity pools
+- Lending protocols
+
+🛡️ **Security & Best Practices**
+- Common vulnerability prevention
+- Access control patterns
+- Reentrancy protection
+- Input validation
+
+📚 **Try asking me:**
+- "How do I create an ERC-20 token?"
+- "What are Vyper security best practices?"
+- "How to optimize gas usage?"
+- "Show me a staking contract example"
+
+💡 **For specific questions**, please be more detailed about what you'd like to learn or build!`
+};
+
+// Function to get fallback answer
+function getFallbackAnswer(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for exact matches first
+  for (const [key, answer] of Object.entries(fallbackAnswers)) {
+    if (lowerMessage.includes(key)) {
+      return answer;
+    }
+  }
+  
+  // Check for related keywords
+  const keywordMappings = {
+    'vyper': 'help',
+    'deploy': 'how to get started', 
+    'deployment': 'how to get started',
+    'gas': 'help',
+    'security': 'help',
+    'defi': 'help',
+    'arbitrum': 'what is arbitpy',
+    'test': 'help',
+    'testing': 'help',
+    'pattern': 'help',
+    'token': 'help',
+    'start': 'how to get started',
+    'getting started': 'how to get started',
+    'tutorial': 'how to get started'
+  };
+  
+  for (const [keyword, answerKey] of Object.entries(keywordMappings)) {
+    if (lowerMessage.includes(keyword)) {
+      return fallbackAnswers[answerKey];
+    }
+  }
+  
+  // Default fallback for any ArbitPy questions
+  return fallbackAnswers['help'];
+}
 
 /**
  * @swagger
@@ -182,6 +322,21 @@ ${context ? `**Additional Context:**\n${context}\n` : ''}
   } catch (error) {
     logger.error(`AI chat request failed for session ${sessionId}:`, error);
     
+    // Try to provide fallback answer before showing error
+    const fallbackResponse = getFallbackAnswer(message);
+    
+    if (fallbackResponse) {
+      logger.info(`Providing fallback response for session: ${sessionId}`);
+      return res.json({
+        success: true,
+        sessionId,
+        response: fallbackResponse,
+        fallback: true,
+        notice: '⚠️ **AI service temporarily unavailable** - Showing cached knowledge base response.',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     let errorMessage = 'Sorry, I encountered an error while processing your request.';
     let statusCode = 500;
     
@@ -297,12 +452,65 @@ Use clear markdown formatting and prioritize issues by severity.`;
   } catch (error) {
     logger.error(`AI code review failed for session ${sessionId}:`, error);
     
-    res.status(500).json({
-      success: false,
-      sessionId,
-      error: 'Code review failed',
-      message: error.message
-    });
+    try {
+      // Provide basic code review fallback
+      const basicReview = `# 🔍 Basic Code Review (Offline Mode)
+
+⚠️ **AI service temporarily unavailable** - Here's a basic analysis:
+
+## 📋 **Manual Review Checklist**
+
+### 🛡️ **Security Check:**
+- [ ] Input validation on all parameters
+- [ ] Access control modifiers (@external, @internal)
+- [ ] No integer overflow/underflow risks
+- [ ] Reentrancy protection (CEI pattern)
+- [ ] Proper event emissions
+
+### ⚡ **Gas Optimization:**
+- [ ] Use \`view\` and \`pure\` where applicable
+- [ ] Minimize storage operations
+- [ ] Use appropriate data types
+- [ ] Avoid unnecessary loops
+
+### ✨ **Code Quality:**
+- [ ] Clear function and variable naming
+- [ ] Comprehensive comments
+- [ ] Proper error messages
+- [ ] Consistent code style
+
+### 📝 **Recommendations:**
+1. **Test thoroughly** on testnet before mainnet
+2. **Use established patterns** from OpenZeppelin
+3. **Consider formal verification** for critical functions
+4. **Monitor gas usage** during testing
+
+### 🔄 **Next Steps:**
+1. Run tests with edge cases
+2. Deploy to Arbitrum Sepolia
+3. Verify contract on Arbiscan
+4. Consider professional audit for high-value contracts
+
+**💡 Tip:** Try the AI review again in a few minutes for detailed analysis!`;
+      
+      res.json({
+        success: true,
+        sessionId,
+        review: basicReview,
+        reviewType,
+        fallback: true,
+        timestamp: new Date().toISOString()
+      });
+    } catch (fallbackError) {
+      logger.error(`Code review fallback also failed for session ${sessionId}:`, fallbackError);
+      
+      res.status(500).json({
+        success: false,
+        sessionId,
+        error: 'Code review failed',
+        message: error.message
+      });
+    }
   }
 });
 

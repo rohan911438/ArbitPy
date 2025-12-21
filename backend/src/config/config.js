@@ -57,10 +57,13 @@ export const config = {
   
   // AI Configuration
   ai: {
-    geminiApiKey: process.env.GEMINI_API_KEY || 'AIzaSyBEjSJaPV3Hqc21B7sWmKtO9rlkSJSbDoE',
+    geminiApiKey: process.env.GEMINI_API_KEY || 'AIzaSyBInWubdwFk4QPpXCsvlH2NfhMDNBsmVo8',
     maxTokens: 4096,
     temperature: 0.7,
-    model: 'gemini-1.5-flash'
+    model: 'gemini-1.5-flash',
+    fallbackEnabled: true,
+    rateLimitPerHour: 20,
+    cacheTimeout: 1800 // 30 minutes
   },
   
   // Security
